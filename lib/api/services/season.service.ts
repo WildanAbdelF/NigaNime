@@ -20,21 +20,21 @@ export const seasonService = {
    * Get current season anime
    */
   async getCurrentSeason(params?: SeasonParams) {
-    return fetcher<Anime[]>(ENDPOINTS.SEASONS.NOW, params);
+    return fetcher<Anime[]>(ENDPOINTS.SEASONS.NOW, params as Record<string, string | number | boolean | undefined>);
   },
 
   /**
    * Get upcoming anime
    */
   async getUpcoming(params?: SeasonParams) {
-    return fetcher<Anime[]>(ENDPOINTS.SEASONS.UPCOMING, params);
+    return fetcher<Anime[]>(ENDPOINTS.SEASONS.UPCOMING, params as Record<string, string | number | boolean | undefined>);
   },
 
   /**
    * Get anime by specific year and season
    */
   async getBySeason(year: number, season: SeasonType, params?: SeasonParams) {
-    return fetcher<Anime[]>(ENDPOINTS.SEASONS.BY_YEAR(year, season), params);
+    return fetcher<Anime[]>(ENDPOINTS.SEASONS.BY_YEAR(year, season), params as Record<string, string | number | boolean | undefined>);
   },
 
   /**

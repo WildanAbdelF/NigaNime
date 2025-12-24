@@ -28,7 +28,7 @@ export const scheduleService = {
    * Get anime schedule
    */
   async getSchedule(params?: ScheduleParams) {
-    return fetcher<Anime[]>(ENDPOINTS.SCHEDULES, params);
+    return fetcher<Anime[]>(ENDPOINTS.SCHEDULES, params as Record<string, string | number | boolean | undefined>);
   },
 
   /**

@@ -20,7 +20,7 @@ export const topService = {
    * Get top anime list
    */
   async getTopAnime(params?: TopAnimeParams) {
-    return fetcher<Anime[]>(ENDPOINTS.TOP.ANIME, params);
+    return fetcher<Anime[]>(ENDPOINTS.TOP.ANIME, params as Record<string, string | number | boolean | undefined>);
   },
 
   /**
