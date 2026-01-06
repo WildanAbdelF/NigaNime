@@ -1,33 +1,29 @@
 import { Navbar, Footer } from "@/components/layout";
-import { HeroSlider, TrendingSection, ScheduleSection } from "@/components/home";
-import { topService } from "@/lib/api";
+import { SpotlightSlider, TrendingSection, ScheduleSection } from "@/components/home";
+import { hianimeService, topService } from "@/lib/api";
 import type { Anime } from "@/types/anime";
+import type { SpotlightAnime } from "@/types/hianime";
 
 export default async function Home() {
   // Fetch data from API
-  let rankedAnimes: Anime[] = [];
+  let spotlightAnimes: SpotlightAnime[] = [];
   let trendingAnimes: Anime[] = [];
 
   try {
-    // Fetch top ranked anime (by score) and top airing in parallel
-    const [rankedResponse, trendingResponse] = await Promise.allSettled([
-      topService.getTopByScore({ limit: 10 }),
+    // Fetch HiAnime spotlight and Jikan top airing in parallel
+    const [hianimeResponse, trendingResponse] = await Promise.allSettled([
+      hianimeService.getHome(),
       topService.getTopAiring({ limit: 24 }),
     ]);
 
-    // Extract top 10 ranked anime for slider
-    if (rankedResponse.status === "fulfilled" && rankedResponse.value?.data) {
-      rankedAnimes = rankedResponse.value.data.slice(0, 10);
+    // Extract spotlight data from HiAnime
+    if (hianimeResponse.status === "fulfilled" && hianimeResponse.value?.success) {
+      spotlightAnimes = hianimeResponse.value.data.spotlightAnimes || [];
     }
 
-    // Extract trending data
+    // Extract trending data from Jikan
     if (trendingResponse.status === "fulfilled" && trendingResponse.value?.data) {
       trendingAnimes = trendingResponse.value.data;
-    }
-
-    // Fallback: If no ranked anime, use trending for slider
-    if (rankedAnimes.length === 0 && trendingAnimes.length > 0) {
-      rankedAnimes = trendingAnimes.slice(0, 10);
     }
   } catch (error) {
     console.error("Error fetching homepage data:", error);
@@ -38,8 +34,8 @@ export default async function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Slider with Top Ranked Anime (1-10) */}
-        <HeroSlider animes={rankedAnimes} />
+        {/* Hero Slider with HiAnime Spotlight */}
+        <SpotlightSlider spotlights={spotlightAnimes} />
 
         {/* Trending Now Section */}
         <TrendingSection animes={trendingAnimes} />
