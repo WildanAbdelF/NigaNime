@@ -1,29 +1,19 @@
 import { Navbar, Footer } from "@/components/layout";
 import { SpotlightSlider, TrendingSection, ScheduleSection } from "@/components/home";
-import { hianimeService, topService } from "@/lib/api";
-import type { Anime } from "@/types/anime";
-import type { SpotlightAnime } from "@/types/hianime";
+import { hianimeService } from "@/lib/api";
+import type { SpotlightAnime, HiAnimeCard } from "@/types/hianime";
 
 export default async function Home() {
-  // Fetch data from API
+  // Fetch data from HiAnime API
   let spotlightAnimes: SpotlightAnime[] = [];
-  let trendingAnimes: Anime[] = [];
+  let trendingAnimes: HiAnimeCard[] = [];
 
   try {
-    // Fetch HiAnime spotlight and Jikan top airing in parallel
-    const [hianimeResponse, trendingResponse] = await Promise.allSettled([
-      hianimeService.getHome(),
-      topService.getTopAiring({ limit: 24 }),
-    ]);
+    const homeResponse = await hianimeService.getHome();
 
-    // Extract spotlight data from HiAnime
-    if (hianimeResponse.status === "fulfilled" && hianimeResponse.value?.success) {
-      spotlightAnimes = hianimeResponse.value.data.spotlightAnimes || [];
-    }
-
-    // Extract trending data from Jikan
-    if (trendingResponse.status === "fulfilled" && trendingResponse.value?.data) {
-      trendingAnimes = trendingResponse.value.data;
+    if (homeResponse?.success) {
+      spotlightAnimes = homeResponse.data.spotlightAnimes || [];
+      trendingAnimes = homeResponse.data.topAiringAnimes || [];
     }
   } catch (error) {
     console.error("Error fetching homepage data:", error);

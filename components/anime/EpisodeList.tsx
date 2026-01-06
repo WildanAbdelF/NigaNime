@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Episode } from "@/types/anime";
+import Link from "next/link";
+import type { HiAnimeEpisode } from "@/types/hianime";
 
 interface EpisodeListProps {
-  episodes: Episode[];
-  animeId: number;
+  episodes: HiAnimeEpisode[];
+  animeId: string;
   animeTitle: string;
 }
 
 export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeListProps) {
-  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const episodesPerPage = 24;
@@ -19,7 +20,7 @@ export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeLi
   const filteredEpisodes = episodes.filter(
     (ep) =>
       ep.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ep.mal_id.toString().includes(searchQuery)
+      ep.number.toString().includes(searchQuery)
   );
 
   // Pagination
@@ -28,15 +29,6 @@ export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeLi
     (currentPage - 1) * episodesPerPage,
     currentPage * episodesPerPage
   );
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "TBA";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   return (
     <div className="mb-8">
@@ -76,25 +68,20 @@ export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeLi
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 mb-4">
         {paginatedEpisodes.map((episode) => (
           <button
-            key={episode.mal_id}
+            key={episode.episodeId}
             onClick={() => setSelectedEpisode(episode)}
             className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-semibold transition-all hover:scale-105 ${
-              selectedEpisode?.mal_id === episode.mal_id
+              selectedEpisode?.episodeId === episode.episodeId
                 ? "bg-[#f5c518] text-black"
-                : episode.filler
+                : episode.isFiller
                 ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
-                : episode.recap
-                ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30"
                 : "bg-[#1a2332] text-white hover:bg-[#232d3f]"
             }`}
-            title={episode.title || `Episode ${episode.mal_id}`}
+            title={episode.title || `Episode ${episode.number}`}
           >
-            <span>{episode.mal_id}</span>
-            {episode.filler && (
+            <span>{episode.number}</span>
+            {episode.isFiller && (
               <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-orange-500 rounded-full" title="Filler" />
-            )}
-            {episode.recap && (
-              <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-purple-500 rounded-full" title="Recap" />
             )}
           </button>
         ))}
@@ -133,10 +120,6 @@ export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeLi
           <span className="w-3 h-3 bg-orange-500/20 rounded" />
           <span>Filler</span>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 bg-purple-500/20 rounded" />
-          <span>Recap</span>
-        </div>
       </div>
 
       {/* Selected Episode Detail */}
@@ -146,43 +129,27 @@ export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeLi
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-2 py-1 bg-[#f5c518] text-black text-xs font-bold rounded">
-                  EP {selectedEpisode.mal_id}
+                  EP {selectedEpisode.number}
                 </span>
-                {selectedEpisode.filler && (
+                {selectedEpisode.isFiller && (
                   <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs rounded">
                     Filler
                   </span>
                 )}
-                {selectedEpisode.recap && (
-                  <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded">
-                    Recap
-                  </span>
-                )}
               </div>
               <h3 className="text-lg font-semibold text-white mb-1">
-                {selectedEpisode.title || `Episode ${selectedEpisode.mal_id}`}
+                {selectedEpisode.title || `Episode ${selectedEpisode.number}`}
               </h3>
-              {selectedEpisode.title_japanese && (
-                <p className="text-gray-400 text-sm mb-2">{selectedEpisode.title_japanese}</p>
-              )}
-              <p className="text-gray-500 text-sm">
-                Aired: {formatDate(selectedEpisode.aired)}
-              </p>
-              {selectedEpisode.score && (
-                <div className="flex items-center gap-1 mt-2 text-[#f5c518]">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                  </svg>
-                  <span className="font-semibold">{selectedEpisode.score}</span>
-                </div>
-              )}
             </div>
-            <button className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold px-6 py-3 rounded-lg transition-colors">
+            <Link 
+              href={`/watch/${selectedEpisode.episodeId}`}
+              className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
+            >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              Watch Episode {selectedEpisode.mal_id}
-            </button>
+              Watch Episode {selectedEpisode.number}
+            </Link>
           </div>
         </div>
       )}

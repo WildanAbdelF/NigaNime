@@ -3,16 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import type { Anime } from "@/types/anime";
+import type { HiAnimeScheduleItem } from "@/types/hianime";
 
 interface ScheduleSectionProps {
-  initialSchedule?: Anime[];
+  initialSchedule?: HiAnimeScheduleItem[];
 }
 
-// Generate dates for the week with day names
+// Generate dates for the week
 function getWeekDays() {
   const days = [];
-  const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const today = new Date();
 
@@ -21,8 +20,7 @@ function getWeekDays() {
     date.setDate(today.getDate() + i);
     days.push({
       label: i === 0 ? "Today" : dayLabels[date.getDay()],
-      dayName: dayNames[date.getDay()],
-      date: date.toISOString().split("T")[0],
+      date: date.toISOString().split("T")[0], // YYYY-MM-DD format
       fullDate: date,
     });
   }
@@ -31,7 +29,7 @@ function getWeekDays() {
 
 export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectionProps) {
   const [activeDay, setActiveDay] = useState(0);
-  const [schedule, setSchedule] = useState<Anime[]>(initialSchedule);
+  const [schedule, setSchedule] = useState<HiAnimeScheduleItem[]>(initialSchedule);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [timezone, setTimezone] = useState("");
@@ -53,12 +51,12 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
       setLoading(true);
       setError(false);
       try {
-        const selectedDay = weekDays[activeDay].dayName;
-        const response = await fetch(`/api/schedule?day=${selectedDay}`);
+        const selectedDate = weekDays[activeDay].date;
+        const response = await fetch(`/api/schedule?date=${selectedDate}`);
         if (response.ok) {
           const data = await response.json();
-          if (data.data && Array.isArray(data.data)) {
-            setSchedule(data.data);
+          if (data.success && data.data?.scheduledAnimes) {
+            setSchedule(data.data.scheduledAnimes);
           } else {
             setSchedule([]);
           }
@@ -78,12 +76,25 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
     fetchSchedule();
   }, [activeDay]);
 
+  // Format time until airing
+  const formatTimeUntil = (seconds: number) => {
+    if (seconds <= 0) return "Airing now";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      return `${days}d ${hours % 24}h`;
+    }
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
+
   return (
     <section className="py-10 bg-[#0a0f1a]">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
+            <span className="text-2xl">📅</span>
             <h2 className="font-heading text-2xl md:text-3xl font-bold text-white">
               Schedule
             </h2>
@@ -111,20 +122,22 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
           ))}
         </div>
 
-        {/* Schedule Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        {/* Schedule List */}
+        <div className="space-y-3">
           {loading ? (
             // Loading skeletons
-            Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-3 bg-[#1a2332]" />
-                <div className="h-4 bg-[#1a2332] rounded w-3/4 mb-2" />
-                <div className="h-3 bg-[#1a2332] rounded w-1/2" />
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="animate-pulse flex items-center gap-4 bg-[#1a2332] rounded-lg p-4">
+                <div className="w-16 h-16 bg-[#232d3f] rounded" />
+                <div className="flex-1">
+                  <div className="h-4 bg-[#232d3f] rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-[#232d3f] rounded w-1/2" />
+                </div>
               </div>
             ))
           ) : error ? (
             // Error state
-            <div className="col-span-full text-center py-12">
+            <div className="text-center py-12">
               <div className="text-gray-500 mb-4">
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -134,64 +147,46 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
               </div>
             </div>
           ) : schedule.length > 0 ? (
-            schedule.slice(0, 8).map((anime) => (
+            schedule.slice(0, 10).map((item) => (
               <Link
-                key={anime.mal_id}
-                href={`/anime/${anime.mal_id}`}
-                className="group"
+                key={item.id}
+                href={`/anime/${item.id}`}
+                className="flex items-center gap-4 bg-[#1a2332] hover:bg-[#232d3f] rounded-lg p-4 transition-colors group"
               >
-                <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-3">
-                  {/* Time Badge */}
-                  {anime.broadcast?.time && (
-                    <div className="absolute top-2 right-2 z-10 bg-[#f5c518] text-black text-xs font-bold px-2 py-1 rounded">
-                      {anime.broadcast.time}
-                    </div>
-                  )}
-
-                  {/* Score Badge */}
-                  {anime.score && (
-                    <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded flex items-center gap-1">
-                      <svg className="w-3 h-3 text-[#f5c518]" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                      </svg>
-                      {anime.score}
-                    </div>
-                  )}
-
-                  {anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url ? (
-                    <Image
-                      src={anime.images.jpg.large_image_url || anime.images.jpg.image_url}
-                      alt={anime.title_english || anime.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-[#1a2332] flex items-center justify-center text-gray-600">
-                      No image
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-
-                  {/* Title Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="font-semibold text-white text-sm line-clamp-1">
-                      {anime.title_english || anime.title}
-                    </h3>
-                  </div>
+                {/* Time */}
+                <div className="text-center min-w-[60px]">
+                  <span className="text-[#f5c518] font-bold text-lg">{item.time}</span>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {formatTimeUntil(item.secondsUntilAiring)}
+                  </p>
                 </div>
 
-                {/* Episode Info */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#f5c518] font-semibold">
-                    {anime.episodes ? `${anime.episodes} EP` : "Ongoing"}
+                {/* Divider */}
+                <div className="w-px h-12 bg-[#2a3441]" />
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-white text-sm line-clamp-1 group-hover:text-[#f5c518] transition-colors">
+                    {item.name}
+                  </h3>
+                  {item.jname && (
+                    <p className="text-gray-500 text-xs line-clamp-1 mt-1">
+                      {item.jname}
+                    </p>
+                  )}
+                </div>
+
+                {/* Episode */}
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1 bg-[#f5c518]/20 text-[#f5c518] text-xs font-bold px-3 py-1 rounded-full">
+                    EP {item.airingEpisode}
                   </span>
-                  <span className="text-gray-500">{anime.type || "TV"}</span>
                 </div>
               </Link>
             ))
           ) : (
             // Empty state
-            <div className="col-span-full text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500">
               <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>

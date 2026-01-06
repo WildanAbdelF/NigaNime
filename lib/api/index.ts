@@ -1,11 +1,10 @@
 /**
  * API Module Entry Point
- * Clean export for all API-related functionality
+ * HiAnime API (via aniwatch-api)
  */
 
 // Core
-export { API_CONFIG, ENDPOINTS } from "./config";
-export { fetcher, fetcherNoCache, ApiError } from "./fetcher";
+export { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "./hianime-config";
 
 // Services
 export * from "./services";

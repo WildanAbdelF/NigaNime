@@ -1,26 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { scheduleService } from "@/lib/api";
-
-type DayName = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+import { hianimeService } from "@/lib/api/services";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const day = searchParams.get("day") as DayName | null;
+  const date = searchParams.get("date"); // Format: YYYY-MM-DD
 
   try {
-    // If day is provided, fetch for that specific day
-    if (day) {
-      const data = await scheduleService.getScheduleByDay(day);
-      return NextResponse.json(data);
-    }
-    
-    // Otherwise get today's schedule
-    const data = await scheduleService.getTodaySchedule();
+    // Use provided date or default to today
+    const targetDate = date || new Date().toISOString().split("T")[0];
+    const data = await hianimeService.getSchedule(targetDate);
     return NextResponse.json(data);
   } catch (error) {
     console.error("Schedule API error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch schedule", data: [] },
+      { success: false, error: "Failed to fetch schedule", data: { scheduledAnimes: [] } },
       { status: 500 }
     );
   }
