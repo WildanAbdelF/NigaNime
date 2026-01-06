@@ -1,105 +1,120 @@
 import { fetcher } from "../fetcher";
 import { ENDPOINTS } from "../config";
-import type { AnimeSearchResponse, SpotlightResponse } from "@/types/anime";
+import type { SeasonListResponse, TopAnimeResponse } from "@/types/anime";
 
 /**
  * Season/Category Service
- * Handles seasonal and category-based anime API calls using Consumet HiAnime API
+ * Handles seasonal and category-based anime API calls using Jikan API
  */
 
-export interface ListParams {
+export interface SeasonParams {
   page?: number;
+  limit?: number;
+  filter?: "tv" | "movie" | "ova" | "special" | "ona" | "music";
+  sfw?: boolean;
 }
 
 export const seasonService = {
   /**
-   * Get currently airing anime
+   * Get current season anime
    */
-  async getTopAiring(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_AIRING, { page });
+  async getCurrentSeason(params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEASON_NOW, { 
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: params?.sfw !== false ? "true" : undefined,
+      filter: params?.filter,
+    });
   },
 
   /**
-   * Get recently updated anime
+   * Get upcoming season anime
    */
-  async getRecentlyUpdated(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.RECENTLY_UPDATED, { page });
+  async getUpcomingSeason(params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEASON_UPCOMING, { 
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: params?.sfw !== false ? "true" : undefined,
+      filter: params?.filter,
+    });
   },
 
   /**
-   * Get recently added anime
+   * Get anime from a specific season
+   * @param year - Year (e.g., 2024)
+   * @param season - Season name ("winter", "spring", "summer", "fall")
    */
-  async getRecentlyAdded(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.RECENTLY_ADDED, { page });
+  async getSeason(year: number, season: string, params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEASON(year, season.toLowerCase()), { 
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: params?.sfw !== false ? "true" : undefined,
+      filter: params?.filter,
+    });
   },
 
   /**
-   * Get latest completed anime
+   * Get top airing anime (used for spotlight/hero section)
    */
-  async getLatestCompleted(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.LATEST_COMPLETED, { page });
+  async getSpotlight(limit?: number) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "airing",
+      limit: limit || 10,
+      sfw: "true",
+    });
   },
 
   /**
-   * Get upcoming anime
+   * Get top anime by popularity (for featured sections)
    */
-  async getUpcoming(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_UPCOMING, { page });
-  },
-
-  /**
-   * Get spotlight/featured anime
-   */
-  async getSpotlight() {
-    return fetcher<SpotlightResponse>(ENDPOINTS.SPOTLIGHT);
-  },
-
-  /**
-   * Get subbed anime
-   */
-  async getSubbedAnime(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.SUBBED, { page });
-  },
-
-  /**
-   * Get dubbed anime
-   */
-  async getDubbedAnime(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.DUBBED, { page });
+  async getFeatured(limit?: number) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "bypopularity",
+      limit: limit || 10,
+      sfw: "true",
+    });
   },
 
   /**
    * Get movies
    */
-  async getMovies(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.MOVIE, { page });
+  async getMovies(params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEARCH, { 
+      type: "movie",
+      order_by: "popularity",
+      sort: "asc",
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: "true",
+    });
   },
 
   /**
    * Get TV series
    */
-  async getTVSeries(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.TV, { page });
+  async getTVSeries(params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEARCH, { 
+      type: "tv",
+      status: "airing",
+      order_by: "popularity",
+      sort: "asc",
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: "true",
+    });
   },
 
   /**
-   * Get OVAs
+   * Get OVA
    */
-  async getOVAs(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.OVA, { page });
-  },
-
-  /**
-   * Get ONAs
-   */
-  async getONAs(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.ONA, { page });
-  },
-
-  /**
-   * Get specials
-   */
-  async getSpecials(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.SPECIAL, { page });
+  async getOVA(params?: SeasonParams) {
+    return fetcher<SeasonListResponse>(ENDPOINTS.SEARCH, { 
+      type: "ova",
+      order_by: "popularity",
+      sort: "asc",
+      page: params?.page,
+      limit: params?.limit || 25,
+      sfw: "true",
+    });
   },
 };

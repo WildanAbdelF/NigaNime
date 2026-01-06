@@ -1,18 +1,6 @@
 import { API_CONFIG } from "./config";
 
 /**
- * Generic API response wrapper for Consumet API
- * Consumet returns data directly, not wrapped in a data property
- */
-interface ConsumetPaginatedResponse<T> {
-  currentPage: number;
-  hasNextPage: boolean;
-  totalPages?: number;
-  totalResults?: number;
-  results: T[];
-}
-
-/**
  * Custom error class for API errors
  */
 export class ApiError extends Error {
@@ -44,8 +32,26 @@ function buildUrl(endpoint: string, params?: Record<string, string | number | bo
 }
 
 /**
+ * Rate limiter for Jikan API (3 requests per second)
+ */
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 350; // 350ms between requests (safe margin)
+
+async function rateLimitedFetch(url: string, options?: RequestInit): Promise<Response> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+  }
+  
+  lastRequestTime = Date.now();
+  return fetch(url, options);
+}
+
+/**
  * Main fetcher function with error handling and caching support
- * Consumet API returns data directly (not wrapped in { data: ... })
+ * Jikan API returns data wrapped in { data: ... } or { pagination: ..., data: [...] }
  */
 export async function fetcher<T>(
   endpoint: string,
@@ -55,7 +61,7 @@ export async function fetcher<T>(
   const url = buildUrl(endpoint, params);
 
   try {
-    const response = await fetch(url, {
+    const response = await rateLimitedFetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -65,9 +71,16 @@ export async function fetcher<T>(
       next: {
         revalidate: 300,
       },
-    });
+    } as RequestInit);
 
     if (!response.ok) {
+      // Handle rate limiting
+      if (response.status === 429) {
+        // Wait and retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetcher<T>(endpoint, params, options);
+      }
+      
       throw new ApiError(
         `API request failed: ${response.statusText}`,
         response.status,
@@ -130,5 +143,3 @@ export async function fetcherNoCache<T>(
     );
   }
 }
-
-export type { ConsumetPaginatedResponse };

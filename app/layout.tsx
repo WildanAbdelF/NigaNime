@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Using Inter as body font (Trueno alternative - clean sans-serif)
+const inter = Inter({
+  variable: "--font-trueno",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "NigaNime - Discover Your Favorite Anime",
-  description: "Explore anime information, rankings, and more with NigaNime",
+  title: "AnimeStream - Watch Your Favorite Anime",
+  description: "Stream anime online, explore trending anime, schedules, and more",
 };
 
 export default function RootLayout({
@@ -25,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${poppins.variable} ${inter.variable} antialiased bg-[#0f1729] text-white`}
       >
         {children}
       </body>

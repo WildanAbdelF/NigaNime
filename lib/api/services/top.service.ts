@@ -1,49 +1,70 @@
 import { fetcher } from "../fetcher";
 import { ENDPOINTS } from "../config";
-import type { AnimeSearchResponse } from "@/types/anime";
+import type { TopAnimeResponse } from "@/types/anime";
 
 /**
  * Top/Rankings Service
- * Handles top anime rankings API calls using Consumet HiAnime API
+ * Handles top anime rankings API calls using Jikan API
  */
 
 export interface TopAnimeParams {
   page?: number;
+  limit?: number;
 }
 
 export const topService = {
   /**
    * Get top airing anime
    */
-  async getTopAiring(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_AIRING, { page });
+  async getTopAiring(params?: TopAnimeParams) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "airing",
+      page: params?.page,
+      limit: params?.limit || 25,
+    });
   },
 
   /**
-   * Get most popular anime
+   * Get most popular anime (by popularity rank)
    */
-  async getMostPopular(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.MOST_POPULAR, { page });
+  async getMostPopular(params?: TopAnimeParams) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "bypopularity",
+      page: params?.page,
+      limit: params?.limit || 25,
+    });
   },
 
   /**
    * Get most favorite anime
    */
-  async getMostFavorite(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.MOST_FAVORITE, { page });
+  async getMostFavorite(params?: TopAnimeParams) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "favorite",
+      page: params?.page,
+      limit: params?.limit || 25,
+    });
   },
 
   /**
    * Get top upcoming anime
    */
-  async getTopUpcoming(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_UPCOMING, { page });
+  async getTopUpcoming(params?: TopAnimeParams) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      filter: "upcoming",
+      page: params?.page,
+      limit: params?.limit || 25,
+    });
   },
 
   /**
-   * Get latest completed anime
+   * Get top anime by score
    */
-  async getLatestCompleted(page?: number) {
-    return fetcher<AnimeSearchResponse>(ENDPOINTS.LATEST_COMPLETED, { page });
+  async getTopByScore(params?: TopAnimeParams) {
+    return fetcher<TopAnimeResponse>(ENDPOINTS.TOP, { 
+      page: params?.page,
+      limit: params?.limit || 25,
+    });
   },
 };
+

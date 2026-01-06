@@ -1,61 +1,59 @@
 /**
- * Consumet API Configuration (HiAnime Provider)
- * Documentation: https://docs.consumet.org/
+ * Jikan API Configuration (MyAnimeList)
+ * Documentation: https://docs.api.jikan.moe/
+ * 
+ * Note: Jikan is a free, open-source API for MyAnimeList
+ * Rate limit: 3 requests per second, 60 per minute
  */
 
 export const API_CONFIG = {
-  BASE_URL: "https://api.consumet.org/anime/hianime",
+  BASE_URL: "https://api.jikan.moe/v4",
   
   // Default pagination
   DEFAULT_LIMIT: 24,
-  MAX_LIMIT: 24,
+  MAX_LIMIT: 25,
 } as const;
 
 // API Endpoints
 export const ENDPOINTS = {
   // Search
-  SEARCH: (query: string) => `/${encodeURIComponent(query)}`,
-  SEARCH_SUGGESTIONS: (query: string) => `/search-suggestions/${encodeURIComponent(query)}`,
-  ADVANCED_SEARCH: "/advanced-search",
-
+  SEARCH: "/anime",
+  
   // Anime Info
-  INFO: "/info",
+  INFO: (id: number) => `/anime/${id}/full`,
   
-  // Watch/Streaming
-  WATCH: (episodeId: string) => `/watch/${episodeId}`,
+  // Top Rankings
+  TOP: "/top/anime",
+  TOP_AIRING: "/top/anime?filter=airing",
+  TOP_UPCOMING: "/top/anime?filter=upcoming",
+  TOP_BYPOPULARITY: "/top/anime?filter=bypopularity",
+  TOP_FAVORITE: "/top/anime?filter=favorite",
   
-  // Schedule
-  SCHEDULE: "/schedule",
-
-  // Top/Rankings
-  TOP_AIRING: "/top-airing",
-  MOST_POPULAR: "/most-popular",
-  MOST_FAVORITE: "/most-favorite",
-
-  // Recent
-  RECENTLY_UPDATED: "/recently-updated",
-  RECENTLY_ADDED: "/recently-added",
-  LATEST_COMPLETED: "/latest-completed",
-
-  // Upcoming
-  TOP_UPCOMING: "/top-upcoming",
-
-  // Categories/Types
-  SUBBED: "/subbed-anime",
-  DUBBED: "/dubbed-anime",
-  MOVIE: "/movie",
-  TV: "/tv",
-  OVA: "/ova",
-  ONA: "/ona",
-  SPECIAL: "/special",
-
+  // Seasons
+  SEASON_NOW: "/seasons/now",
+  SEASON_UPCOMING: "/seasons/upcoming",
+  SEASON: (year: number, season: string) => `/seasons/${year}/${season}`,
+  
+  // Schedules
+  SCHEDULES: "/schedules",
+  SCHEDULE_DAY: (day: string) => `/schedules?filter=${day}`,
+  
+  // Random
+  RANDOM: "/random/anime",
+  
   // Genres
-  GENRES: "/genres",
-  GENRE: (genre: string) => `/genre/${genre}`,
-
-  // Studio
-  STUDIO: (studio: string) => `/studio/${studio}`,
-
-  // Spotlight
-  SPOTLIGHT: "/spotlight",
+  GENRES: "/genres/anime",
+  
+  // Recommendations
+  RECOMMENDATIONS: (id: number) => `/anime/${id}/recommendations`,
+  
+  // Characters & Staff
+  CHARACTERS: (id: number) => `/anime/${id}/characters`,
+  STAFF: (id: number) => `/anime/${id}/staff`,
+  
+  // Episodes
+  EPISODES: (id: number) => `/anime/${id}/episodes`,
+  
+  // Reviews
+  REVIEWS: (id: number) => `/anime/${id}/reviews`,
 } as const;
