@@ -84,7 +84,6 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">📅</span>
             <h2 className="font-heading text-2xl md:text-3xl font-bold text-white">
               Schedule
             </h2>

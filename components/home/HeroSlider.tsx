@@ -76,7 +76,7 @@ export default function HeroSlider({ animes }: HeroSliderProps) {
                   alt={anime.title_english || anime.title}
                   fill
                   sizes="100vw"
-                  className="object-contain object-right"
+                  className="object-cover object-center"
                   priority={index === 0}
                   quality={100}
                   unoptimized
