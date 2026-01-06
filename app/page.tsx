@@ -1,23 +1,23 @@
 import { Navbar, Footer } from "@/components/layout";
 import { HeroSlider, TrendingSection, ScheduleSection } from "@/components/home";
-import { seasonService, topService } from "@/lib/api";
+import { topService } from "@/lib/api";
 import type { Anime } from "@/types/anime";
 
 export default async function Home() {
   // Fetch data from API
-  let spotlightAnimes: Anime[] = [];
+  let rankedAnimes: Anime[] = [];
   let trendingAnimes: Anime[] = [];
 
   try {
-    // Fetch spotlight, trending, and popular anime in parallel
-    const [spotlightResponse, trendingResponse] = await Promise.allSettled([
-      seasonService.getSpotlight(10),
+    // Fetch top ranked anime (by score) and top airing in parallel
+    const [rankedResponse, trendingResponse] = await Promise.allSettled([
+      topService.getTopByScore({ limit: 10 }),
       topService.getTopAiring({ limit: 24 }),
     ]);
 
-    // Extract spotlight data (top airing for slider)
-    if (spotlightResponse.status === "fulfilled" && spotlightResponse.value?.data) {
-      spotlightAnimes = spotlightResponse.value.data.slice(0, 5);
+    // Extract top 10 ranked anime for slider
+    if (rankedResponse.status === "fulfilled" && rankedResponse.value?.data) {
+      rankedAnimes = rankedResponse.value.data.slice(0, 10);
     }
 
     // Extract trending data
@@ -25,9 +25,9 @@ export default async function Home() {
       trendingAnimes = trendingResponse.value.data;
     }
 
-    // Fallback: If no spotlight, use trending for slider
-    if (spotlightAnimes.length === 0 && trendingAnimes.length > 0) {
-      spotlightAnimes = trendingAnimes.slice(0, 5);
+    // Fallback: If no ranked anime, use trending for slider
+    if (rankedAnimes.length === 0 && trendingAnimes.length > 0) {
+      rankedAnimes = trendingAnimes.slice(0, 10);
     }
   } catch (error) {
     console.error("Error fetching homepage data:", error);
@@ -38,8 +38,8 @@ export default async function Home() {
       <Navbar />
 
       <main>
-        {/* Hero Slider with Popular/Spotlight Anime */}
-        <HeroSlider animes={spotlightAnimes} />
+        {/* Hero Slider with Top Ranked Anime (1-10) */}
+        <HeroSlider animes={rankedAnimes} />
 
         {/* Trending Now Section */}
         <TrendingSection animes={trendingAnimes} />
