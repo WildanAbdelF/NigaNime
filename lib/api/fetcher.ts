@@ -1,20 +1,15 @@
 import { API_CONFIG } from "./config";
 
 /**
- * Generic API response wrapper
+ * Generic API response wrapper for Consumet API
+ * Consumet returns data directly, not wrapped in a data property
  */
-interface ApiResponse<T> {
-  data: T;
-  pagination?: {
-    last_visible_page: number;
-    has_next_page: boolean;
-    current_page: number;
-    items: {
-      count: number;
-      total: number;
-      per_page: number;
-    };
-  };
+interface ConsumetPaginatedResponse<T> {
+  currentPage: number;
+  hasNextPage: boolean;
+  totalPages?: number;
+  totalResults?: number;
+  results: T[];
 }
 
 /**
@@ -50,12 +45,13 @@ function buildUrl(endpoint: string, params?: Record<string, string | number | bo
 
 /**
  * Main fetcher function with error handling and caching support
+ * Consumet API returns data directly (not wrapped in { data: ... })
  */
 export async function fetcher<T>(
   endpoint: string,
   params?: Record<string, string | number | boolean | undefined>,
   options?: RequestInit
-): Promise<ApiResponse<T>> {
+): Promise<T> {
   const url = buildUrl(endpoint, params);
 
   try {
@@ -80,7 +76,7 @@ export async function fetcher<T>(
     }
 
     const data = await response.json();
-    return data;
+    return data as T;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -98,9 +94,41 @@ export async function fetcher<T>(
  */
 export async function fetcherNoCache<T>(
   endpoint: string,
-  params?: Record<string, string | number | boolean | undefined>
-): Promise<ApiResponse<T>> {
-  return fetcher<T>(endpoint, params, {
-    cache: "no-store",
-  });
+  params?: Record<string, string | number | boolean | undefined>,
+  options?: RequestInit
+): Promise<T> {
+  const url = buildUrl(endpoint, params);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `API request failed: ${response.statusText}`,
+        response.status,
+        endpoint
+      );
+    }
+
+    const data = await response.json();
+    return data as T;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(
+      error instanceof Error ? error.message : "Unknown error occurred",
+      500,
+      endpoint
+    );
+  }
 }
+
+export type { ConsumetPaginatedResponse };

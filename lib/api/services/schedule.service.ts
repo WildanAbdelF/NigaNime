@@ -1,40 +1,30 @@
 import { fetcher } from "../fetcher";
 import { ENDPOINTS } from "../config";
-import type { Anime } from "@/types/anime";
+import type { ScheduleResponse } from "@/types/anime";
 
 /**
  * Schedule Service
- * Handles anime schedule/airing API calls
+ * Handles anime schedule/airing API calls using Consumet HiAnime API
  */
 
-export type DayOfWeek = 
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday"
-  | "unknown";
-
 export interface ScheduleParams {
-  page?: number;
-  limit?: number;
-  filter?: DayOfWeek;
+  date?: string; // Format: YYYY-MM-DD
 }
 
 export const scheduleService = {
   /**
-   * Get anime schedule
+   * Get anime schedule for a specific date
+   * @param date - Date in YYYY-MM-DD format (e.g., "2026-01-06")
    */
-  async getSchedule(params?: ScheduleParams) {
-    return fetcher<Anime[]>(ENDPOINTS.SCHEDULES, params as Record<string, string | number | boolean | undefined>);
+  async getSchedule(date?: string) {
+    return fetcher<ScheduleResponse>(ENDPOINTS.SCHEDULE, { date });
   },
 
   /**
-   * Get anime schedule by day
+   * Get today's schedule
    */
-  async getScheduleByDay(day: DayOfWeek, params?: Omit<ScheduleParams, "filter">) {
-    return fetcher<Anime[]>(ENDPOINTS.SCHEDULES, { filter: day, ...params });
+  async getTodaySchedule() {
+    const today = new Date().toISOString().split("T")[0];
+    return fetcher<ScheduleResponse>(ENDPOINTS.SCHEDULE, { date: today });
   },
 };

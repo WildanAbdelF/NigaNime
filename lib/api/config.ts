@@ -1,64 +1,61 @@
 /**
- * Jikan API Configuration
- * Documentation: https://docs.api.jikan.moe/
+ * Consumet API Configuration (HiAnime Provider)
+ * Documentation: https://docs.consumet.org/
  */
 
 export const API_CONFIG = {
-  BASE_URL: "https://api.jikan.moe/v4",
+  BASE_URL: "https://api.consumet.org/anime/hianime",
   
-  // Rate limiting: Jikan has rate limits, so we need to be careful
-  // Free tier: 3 requests per second, 60 requests per minute
-  RATE_LIMIT: {
-    REQUESTS_PER_SECOND: 3,
-    REQUESTS_PER_MINUTE: 60,
-  },
-
   // Default pagination
-  DEFAULT_LIMIT: 25,
-  MAX_LIMIT: 25,
+  DEFAULT_LIMIT: 24,
+  MAX_LIMIT: 24,
 } as const;
 
 // API Endpoints
 export const ENDPOINTS = {
-  // Anime
-  ANIME: {
-    LIST: "/anime",
-    DETAIL: (id: number) => `/anime/${id}`,
-    FULL: (id: number) => `/anime/${id}/full`,
-    CHARACTERS: (id: number) => `/anime/${id}/characters`,
-    EPISODES: (id: number) => `/anime/${id}/episodes`,
-    RECOMMENDATIONS: (id: number) => `/anime/${id}/recommendations`,
-    REVIEWS: (id: number) => `/anime/${id}/reviews`,
-  },
-
-  // Top Anime
-  TOP: {
-    ANIME: "/top/anime",
-    MANGA: "/top/manga",
-    CHARACTERS: "/top/characters",
-  },
-
-  // Seasons
-  SEASONS: {
-    NOW: "/seasons/now",
-    UPCOMING: "/seasons/upcoming",
-    LIST: "/seasons",
-    BY_YEAR: (year: number, season: string) => `/seasons/${year}/${season}`,
-  },
-
   // Search
-  SEARCH: {
-    ANIME: "/anime",
-    MANGA: "/manga",
-    CHARACTERS: "/characters",
-  },
+  SEARCH: (query: string) => `/${encodeURIComponent(query)}`,
+  SEARCH_SUGGESTIONS: (query: string) => `/search-suggestions/${encodeURIComponent(query)}`,
+  ADVANCED_SEARCH: "/advanced-search",
 
-  // Schedules
-  SCHEDULES: "/schedules",
+  // Anime Info
+  INFO: "/info",
+  
+  // Watch/Streaming
+  WATCH: (episodeId: string) => `/watch/${episodeId}`,
+  
+  // Schedule
+  SCHEDULE: "/schedule",
+
+  // Top/Rankings
+  TOP_AIRING: "/top-airing",
+  MOST_POPULAR: "/most-popular",
+  MOST_FAVORITE: "/most-favorite",
+
+  // Recent
+  RECENTLY_UPDATED: "/recently-updated",
+  RECENTLY_ADDED: "/recently-added",
+  LATEST_COMPLETED: "/latest-completed",
+
+  // Upcoming
+  TOP_UPCOMING: "/top-upcoming",
+
+  // Categories/Types
+  SUBBED: "/subbed-anime",
+  DUBBED: "/dubbed-anime",
+  MOVIE: "/movie",
+  TV: "/tv",
+  OVA: "/ova",
+  ONA: "/ona",
+  SPECIAL: "/special",
 
   // Genres
-  GENRES: {
-    ANIME: "/genres/anime",
-    MANGA: "/genres/manga",
-  },
+  GENRES: "/genres",
+  GENRE: (genre: string) => `/genre/${genre}`,
+
+  // Studio
+  STUDIO: (studio: string) => `/studio/${studio}`,
+
+  // Spotlight
+  SPOTLIGHT: "/spotlight",
 } as const;

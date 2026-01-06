@@ -1,58 +1,78 @@
 import { fetcher } from "../fetcher";
 import { ENDPOINTS } from "../config";
-import type { Anime, AnimeSearchParams, AnimeFull } from "@/types/anime";
+import type { 
+  AnimeSearchResponse, 
+  AnimeInfo, 
+  EpisodeSourcesResponse,
+  AdvancedSearchParams,
+  SearchSuggestionsResponse,
+  Genre
+} from "@/types/anime";
 
 /**
  * Anime Service
- * Handles all anime-related API calls
+ * Handles all anime-related API calls using Consumet HiAnime API
  */
 export const animeService = {
   /**
-   * Get list of anime with optional filters
+   * Search anime by query
    */
-  async getList(params?: AnimeSearchParams) {
-    return fetcher<Anime[]>(ENDPOINTS.ANIME.LIST, params as Record<string, string | number | boolean | undefined>);
+  async search(query: string, page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.SEARCH(query), { page });
   },
 
   /**
-   * Get anime by ID
+   * Get search suggestions
    */
-  async getById(id: number) {
-    return fetcher<Anime>(ENDPOINTS.ANIME.DETAIL(id));
+  async getSearchSuggestions(query: string) {
+    return fetcher<SearchSuggestionsResponse>(ENDPOINTS.SEARCH_SUGGESTIONS(query));
   },
 
   /**
-   * Get full anime details by ID
+   * Advanced search with filters
    */
-  async getFullById(id: number) {
-    return fetcher<AnimeFull>(ENDPOINTS.ANIME.FULL(id));
+  async advancedSearch(params?: AdvancedSearchParams) {
+    return fetcher<AnimeSearchResponse>(
+      ENDPOINTS.ADVANCED_SEARCH, 
+      params as Record<string, string | number | boolean | undefined>
+    );
   },
 
   /**
-   * Get anime characters
+   * Get anime info by ID
    */
-  async getCharacters(id: number) {
-    return fetcher<unknown[]>(ENDPOINTS.ANIME.CHARACTERS(id));
+  async getInfo(id: string) {
+    return fetcher<AnimeInfo>(ENDPOINTS.INFO, { id });
   },
 
   /**
-   * Get anime episodes
+   * Get episode streaming sources
    */
-  async getEpisodes(id: number, page?: number) {
-    return fetcher<unknown[]>(ENDPOINTS.ANIME.EPISODES(id), { page });
+  async getEpisodeSources(episodeId: string, server?: string, category?: "sub" | "dub") {
+    return fetcher<EpisodeSourcesResponse>(
+      ENDPOINTS.WATCH(episodeId), 
+      { server, category }
+    );
   },
 
   /**
-   * Get anime recommendations
+   * Get all genres
    */
-  async getRecommendations(id: number) {
-    return fetcher<unknown[]>(ENDPOINTS.ANIME.RECOMMENDATIONS(id));
+  async getGenres() {
+    return fetcher<Genre[]>(ENDPOINTS.GENRES);
   },
 
   /**
-   * Search anime
+   * Get anime by genre
    */
-  async search(query: string, params?: Omit<AnimeSearchParams, "q">) {
-    return fetcher<Anime[]>(ENDPOINTS.SEARCH.ANIME, { q: query, ...params });
+  async getByGenre(genre: string, page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.GENRE(genre), { page });
+  },
+
+  /**
+   * Get anime by studio
+   */
+  async getByStudio(studio: string, page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.STUDIO(studio), { page });
   },
 };

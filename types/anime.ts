@@ -1,162 +1,238 @@
 /**
  * Anime Types
- * Based on Jikan API response structure
- * Documentation: https://docs.api.jikan.moe/
+ * Based on Consumet API HiAnime response structure
+ * Documentation: https://docs.consumet.org/
  */
 
-export interface AnimeImage {
-  image_url: string;
-  small_image_url: string;
-  large_image_url: string;
-}
-
-export interface AnimeImages {
-  jpg: AnimeImage;
-  webp: AnimeImage;
-}
-
-export interface AnimeTrailer {
-  youtube_id: string | null;
-  url: string | null;
-  embed_url: string | null;
-}
-
-export interface AnimeTitle {
-  type: string;
+/**
+ * Basic anime result from search/listing
+ */
+export interface AnimeResult {
+  id: string;
   title: string;
-}
-
-export interface AnimeAired {
-  from: string | null;
-  to: string | null;
-  prop: {
-    from: { day: number | null; month: number | null; year: number | null };
-    to: { day: number | null; month: number | null; year: number | null };
-  };
-  string: string;
-}
-
-export interface AnimeBroadcast {
-  day: string | null;
-  time: string | null;
-  timezone: string | null;
-  string: string | null;
-}
-
-export interface AnimeProducer {
-  mal_id: number;
-  type: string;
-  name: string;
-  url: string;
-}
-
-export interface AnimeGenre {
-  mal_id: number;
-  type: string;
-  name: string;
-  url: string;
+  url?: string;
+  image: string;
+  duration?: string;
+  japaneseTitle?: string;
+  type?: string;
+  nsfw?: boolean;
+  sub?: number;
+  dub?: number;
+  episodes?: number;
 }
 
 /**
- * Base Anime type
+ * Search/Listing response with pagination
  */
-export interface Anime {
-  mal_id: number;
-  url: string;
-  images: AnimeImages;
-  trailer: AnimeTrailer;
-  approved: boolean;
-  titles: AnimeTitle[];
+export interface AnimeSearchResponse {
+  currentPage: number;
+  hasNextPage: boolean;
+  totalPages?: number;
+  results: AnimeResult[];
+}
+
+/**
+ * Episode information
+ */
+export interface Episode {
+  id: string;
+  number: number;
+  title?: string;
+  isFiller?: boolean;
+  url?: string;
+}
+
+/**
+ * Related anime
+ */
+export interface RelatedAnime {
+  id: string;
   title: string;
-  title_english: string | null;
-  title_japanese: string | null;
-  title_synonyms: string[];
-  type: string | null;
-  source: string | null;
-  episodes: number | null;
-  status: string | null;
-  airing: boolean;
-  aired: AnimeAired;
-  duration: string | null;
-  rating: string | null;
-  score: number | null;
-  scored_by: number | null;
-  rank: number | null;
-  popularity: number | null;
-  members: number | null;
-  favorites: number | null;
-  synopsis: string | null;
-  background: string | null;
-  season: string | null;
-  year: number | null;
-  broadcast: AnimeBroadcast;
-  producers: AnimeProducer[];
-  licensors: AnimeProducer[];
-  studios: AnimeProducer[];
-  genres: AnimeGenre[];
-  explicit_genres: AnimeGenre[];
-  themes: AnimeGenre[];
-  demographics: AnimeGenre[];
+  url?: string;
+  image: string;
+  japaneseTitle?: string;
+  type?: string;
+  sub?: number;
+  dub?: number;
+  episodes?: number;
 }
 
 /**
- * Full Anime type (includes additional relations, theme songs, etc.)
+ * Recommendation
  */
-export interface AnimeFull extends Anime {
-  relations: {
-    relation: string;
-    entry: {
-      mal_id: number;
-      type: string;
-      name: string;
-      url: string;
-    }[];
-  }[];
-  theme: {
-    openings: string[];
-    endings: string[];
+export interface Recommendation {
+  id: string;
+  title: string;
+  url?: string;
+  image: string;
+  duration?: string;
+  japaneseTitle?: string;
+  type?: string;
+  nsfw?: boolean;
+  sub?: number;
+  dub?: number;
+  episodes?: number;
+}
+
+/**
+ * Full anime information
+ */
+export interface AnimeInfo {
+  id: string;
+  title: string;
+  url?: string;
+  image: string;
+  cover?: string;
+  description?: string;
+  type?: string;
+  releaseDate?: string;
+  genres?: string[];
+  status?: string;
+  studios?: string[];
+  duration?: string;
+  totalEpisodes?: number;
+  subOrDub?: "sub" | "dub" | "both";
+  synonyms?: string[];
+  countryOfOrigin?: string;
+  isAdult?: boolean;
+  isLicensed?: boolean;
+  season?: string;
+  popularity?: number;
+  rating?: number;
+  episodes?: Episode[];
+  recommendations?: Recommendation[];
+  relatedAnime?: RelatedAnime[];
+}
+
+/**
+ * Streaming source
+ */
+export interface StreamingSource {
+  url: string;
+  isM3U8: boolean;
+  quality?: string;
+}
+
+/**
+ * Subtitle track
+ */
+export interface Subtitle {
+  url: string;
+  lang: string;
+}
+
+/**
+ * Episode streaming sources response
+ */
+export interface EpisodeSourcesResponse {
+  headers?: Record<string, string>;
+  sources: StreamingSource[];
+  subtitles?: Subtitle[];
+  intro?: {
+    start: number;
+    end: number;
   };
-  external: {
-    name: string;
-    url: string;
-  }[];
-  streaming: {
-    name: string;
-    url: string;
-  }[];
+  outro?: {
+    start: number;
+    end: number;
+  };
 }
 
 /**
- * Search Parameters for Anime
+ * Schedule item
  */
-export interface AnimeSearchParams {
-  q?: string;
+export interface ScheduleItem {
+  id: string;
+  title: string;
+  japaneseTitle?: string;
+  url?: string;
+  image?: string;
+  time?: string;
+  episode?: number;
+  airingTime?: string;
+}
+
+/**
+ * Schedule response
+ */
+export interface ScheduleResponse {
+  scheduledAnimes: ScheduleItem[];
+}
+
+/**
+ * Spotlight anime
+ */
+export interface SpotlightAnime {
+  id: string;
+  title: string;
+  japaneseTitle?: string;
+  url?: string;
+  image: string;
+  banner?: string;
+  description?: string;
+  type?: string;
+  rank?: number;
+  releaseDate?: string;
+  quality?: string;
+  sub?: number;
+  dub?: number;
+  episodes?: number;
+}
+
+/**
+ * Spotlight response
+ */
+export interface SpotlightResponse {
+  results: SpotlightAnime[];
+}
+
+/**
+ * Genre item
+ */
+export interface Genre {
+  id: string;
+  title: string;
+  url?: string;
+}
+
+/**
+ * Search suggestion
+ */
+export interface SearchSuggestion {
+  id: string;
+  title: string;
+  japaneseTitle?: string;
+  image: string;
+  type?: string;
+  duration?: string;
+  releaseDate?: string;
+}
+
+/**
+ * Search suggestions response
+ */
+export interface SearchSuggestionsResponse {
+  suggestions: SearchSuggestion[];
+}
+
+/**
+ * Advanced search parameters
+ */
+export interface AdvancedSearchParams {
   page?: number;
-  limit?: number;
-  type?: "tv" | "movie" | "ova" | "special" | "ona" | "music" | "cm" | "pv" | "tv_special";
+  type?: string;
+  status?: string;
+  rated?: string;
   score?: number;
-  min_score?: number;
-  max_score?: number;
-  status?: "airing" | "complete" | "upcoming";
-  rating?: "g" | "pg" | "pg13" | "r17" | "r" | "rx";
-  sfw?: boolean;
+  season?: string;
+  language?: string;
+  startDate?: string;
+  endDate?: string;
+  sort?: string;
   genres?: string;
-  genres_exclude?: string;
-  order_by?: 
-    | "mal_id"
-    | "title"
-    | "start_date"
-    | "end_date"
-    | "episodes"
-    | "score"
-    | "scored_by"
-    | "rank"
-    | "popularity"
-    | "members"
-    | "favorites";
-  sort?: "desc" | "asc";
-  letter?: string;
-  producers?: string;
-  start_date?: string;
-  end_date?: string;
 }
+
+// Re-export for backward compatibility
+export type Anime = AnimeResult;
+export type AnimeFull = AnimeInfo;
+export type AnimeSearchParams = AdvancedSearchParams & { q?: string };

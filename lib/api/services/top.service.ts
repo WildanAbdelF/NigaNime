@@ -1,39 +1,49 @@
 import { fetcher } from "../fetcher";
 import { ENDPOINTS } from "../config";
-import type { Anime } from "@/types/anime";
+import type { AnimeSearchResponse } from "@/types/anime";
 
 /**
  * Top/Rankings Service
- * Handles top anime, manga, characters API calls
+ * Handles top anime rankings API calls using Consumet HiAnime API
  */
-
-export type TopAnimeFilter = "airing" | "upcoming" | "bypopularity" | "favorite";
 
 export interface TopAnimeParams {
   page?: number;
-  limit?: number;
-  filter?: TopAnimeFilter;
 }
 
 export const topService = {
   /**
-   * Get top anime list
+   * Get top airing anime
    */
-  async getTopAnime(params?: TopAnimeParams) {
-    return fetcher<Anime[]>(ENDPOINTS.TOP.ANIME, params as Record<string, string | number | boolean | undefined>);
+  async getTopAiring(page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_AIRING, { page });
   },
 
   /**
-   * Get top manga list
+   * Get most popular anime
    */
-  async getTopManga(params?: { page?: number; limit?: number }) {
-    return fetcher<unknown[]>(ENDPOINTS.TOP.MANGA, params);
+  async getMostPopular(page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.MOST_POPULAR, { page });
   },
 
   /**
-   * Get top characters
+   * Get most favorite anime
    */
-  async getTopCharacters(params?: { page?: number; limit?: number }) {
-    return fetcher<unknown[]>(ENDPOINTS.TOP.CHARACTERS, params);
+  async getMostFavorite(page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.MOST_FAVORITE, { page });
+  },
+
+  /**
+   * Get top upcoming anime
+   */
+  async getTopUpcoming(page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.TOP_UPCOMING, { page });
+  },
+
+  /**
+   * Get latest completed anime
+   */
+  async getLatestCompleted(page?: number) {
+    return fetcher<AnimeSearchResponse>(ENDPOINTS.LATEST_COMPLETED, { page });
   },
 };
