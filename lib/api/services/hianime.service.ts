@@ -77,6 +77,45 @@ export const hianimeService = {
   },
 
   /**
+   * Search anime with pagination and optional filters
+   * Uses the Search API which supports pagination and various filters
+   * @param query - Search query string
+   * @param page - Page number (default 1)
+   * @param filters - Optional filters (sort, genres, type, etc.)
+   */
+  async searchWithPagination(query: string, page: number = 1, filters?: {
+    genres?: string;  // comma-separated genres, e.g. "action,adventure"
+    type?: string;    // movie, tv, ova, ona, special
+    sort?: string;    // score, name, recently-added, recently-updated, most-watched, most-favourite
+    season?: string;  // spring, summer, fall, winter
+    language?: string; // sub, dub, sub-&-dub
+    status?: string;  // finished-airing, currently-airing, not-yet-aired
+    rated?: string;   // g, pg, pg-13, r, r+, rx
+    startDate?: string;
+    endDate?: string;
+    score?: string;   // appalling, horrible, very-bad, bad, average, fine, good, very-good, great, masterpiece
+  }) {
+    const params = new URLSearchParams();
+    params.set("q", query);
+    if (page > 1) params.set("page", page.toString());
+    
+    if (filters) {
+      if (filters.genres) params.set("genres", filters.genres);
+      if (filters.type) params.set("type", filters.type);
+      if (filters.sort) params.set("sort", filters.sort);
+      if (filters.season) params.set("season", filters.season);
+      if (filters.language) params.set("language", filters.language);
+      if (filters.status) params.set("status", filters.status);
+      if (filters.rated) params.set("rated", filters.rated);
+      if (filters.startDate) params.set("start_date", filters.startDate);
+      if (filters.endDate) params.set("end_date", filters.endDate);
+      if (filters.score) params.set("score", filters.score);
+    }
+    
+    return fetchHiAnime<HiAnimeSearchResponse>(`${HIANIME_ENDPOINTS.SEARCH}?${params.toString()}`);
+  },
+
+  /**
    * Get schedule for a specific date
    */
   async getSchedule(date: string) {
@@ -148,5 +187,46 @@ export const hianimeService = {
    */
   async getGenre(genre: string, page: number = 1) {
     return fetchHiAnime<any>(HIANIME_ENDPOINTS.GENRE(genre, page));
+  },
+
+  /**
+   * Advanced search with multiple filters combined
+   * Uses the search endpoint which supports: genres, type, sort, season, language, status, rated, dates, score
+   * NOTE: The search API requires a query parameter. For filter-only searches, we use a minimal character.
+   * @param filters - Object containing filter parameters
+   */
+  async advancedFilter(filters: {
+    query?: string;
+    genres?: string;  // comma-separated genres, e.g. "action,adventure"
+    type?: string;    // movie, tv, ova, ona, special
+    sort?: string;    // score, name, recently-added, recently-updated, most-watched, most-favourite
+    season?: string;  // spring, summer, fall, winter
+    language?: string; // sub, dub, sub-&-dub
+    status?: string;  // finished-airing, currently-airing, not-yet-aired
+    rated?: string;   // g, pg, pg-13, r, r+, rx
+    startDate?: string;
+    endDate?: string;
+    score?: string;   // appalling, horrible, very-bad, bad, average, fine, good, very-good, great, masterpiece
+    page?: number;
+  }) {
+    const params = new URLSearchParams();
+    
+    // Query is required for search API - use a wildcard-like character for filter-only mode
+    // The API accepts any string, so we use a common letter to get broad results
+    params.set("q", filters.query || " ");
+    
+    if (filters.genres) params.set("genres", filters.genres);
+    if (filters.type) params.set("type", filters.type);
+    if (filters.sort) params.set("sort", filters.sort);
+    if (filters.season) params.set("season", filters.season);
+    if (filters.language) params.set("language", filters.language);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.rated) params.set("rated", filters.rated);
+    if (filters.startDate) params.set("start_date", filters.startDate);
+    if (filters.endDate) params.set("end_date", filters.endDate);
+    if (filters.score) params.set("score", filters.score);
+    if (filters.page && filters.page > 1) params.set("page", filters.page.toString());
+    
+    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.SEARCH}?${params.toString()}`);
   },
 };

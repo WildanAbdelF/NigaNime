@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, FormEvent } from "react";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -13,6 +13,7 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -22,6 +23,16 @@ export default function Navbar() {
       return pathname === "/";
     }
     return pathname.startsWith(href);
+  };
+
+  // Handle search submit
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/anime?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+      setIsMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -72,7 +83,7 @@ export default function Navbar() {
         {/* Search & Profile */}
         <div className="flex items-center gap-4">
           {/* Search Bar */}
-          <div className="relative hidden sm:block">
+          <form onSubmit={handleSearchSubmit} className="relative hidden sm:block">
             <input
               type="text"
               placeholder="Search anime..."
@@ -80,20 +91,22 @@ export default function Navbar() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-48 lg:w-64 bg-[#1a2332] border border-[#2a3441] rounded-full px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#f5c518] transition-colors"
             />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+            <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
+              <svg
+                className="w-4 h-4 text-gray-500 hover:text-[#f5c518] transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+          </form>
 
           {/* Profile Avatar */}
           <button className="w-10 h-10 rounded-full bg-[#1a2332] border border-[#2a3441] flex items-center justify-center hover:border-[#f5c518] transition-colors">
@@ -122,7 +135,7 @@ export default function Navbar() {
       >
         <div className="flex flex-col p-4 space-y-2">
           {/* Mobile Search */}
-          <div className="relative mb-2">
+          <form onSubmit={handleSearchSubmit} className="relative mb-2">
             <input
               type="text"
               placeholder="Search anime..."
@@ -130,20 +143,22 @@ export default function Navbar() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-[#1a2332] border border-[#2a3441] rounded-full px-4 py-3 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#f5c518] transition-colors"
             />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
+            <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
+              <svg
+                className="w-5 h-5 text-gray-500 hover:text-[#f5c518] transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+          </form>
 
           {/* Mobile Nav Links */}
           {navLinks.map((link) => (

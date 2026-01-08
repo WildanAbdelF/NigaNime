@@ -261,7 +261,7 @@ export interface HiAnimeScheduleItem {
   time: string;
   name: string;
   jname: string;
-  airingEpisode: number;
+  airingTimestamp: number;
   secondsUntilAiring: number;
 }
 

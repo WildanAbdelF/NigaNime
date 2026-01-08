@@ -3,26 +3,26 @@ import Link from "next/link";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api";
 import SortDropdown from "@/components/anime/SortDropdown";
-import GenreDropdown from "@/components/anime/GenreDropdown";
 import ViewToggle from "@/components/anime/ViewToggle";
+import SearchInput from "@/components/anime/SearchInput";
 
-const ALPHABET = ["All", "#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
-
+// Sort options - values must match Search API sort parameter
+// Valid API values: default, recently-added, recently-updated, score, name-az, most-watched, most-favourite
 const SORT_OPTIONS = [
-  { label: "Popularity", value: "most-popular" },
-  { label: "Most Favorite", value: "most-favorite" },
-  { label: "Latest Episodes", value: "recently-updated" },
+  { label: "Default", value: "default" },
+  { label: "Recently Updated", value: "recently-updated" },
   { label: "Recently Added", value: "recently-added" },
-  { label: "Top Airing", value: "top-airing" },
-  { label: "Top Upcoming", value: "top-upcoming" },
+  { label: "Top Rated", value: "score" },
+  { label: "Name A-Z", value: "name-az" },
+  { label: "Most Watched", value: "most-watched" },
+  { label: "Most Favourite", value: "most-favourite" },
 ];
 
 interface PageProps {
   searchParams: Promise<{ 
     page?: string;
-    letter?: string;
+    q?: string;
     sort?: string;
-    genre?: string;
     view?: string;
   }>;
 }
@@ -30,28 +30,46 @@ interface PageProps {
 export default async function AnimePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const currentPage = parseInt(params.page || "1");
-  const selectedLetter = params.letter || "All";
-  const sortBy = params.sort || "most-popular";
-  const selectedGenre = params.genre || "";
+  const searchQuery = params.q || "";
+  const sortBy = params.sort || "default";
   const viewMode = (params.view as "grid" | "list") || "grid";
 
-  // Fetch data based on filter priority: Genre > Letter > Sort
+  // Fetch data based on filters
   let response;
-  let activeFilter: "genre" | "letter" | "sort" = "sort";
+  let animes: any[] = [];
   
   try {
-    if (selectedGenre) {
-      // Genre filter takes priority
-      activeFilter = "genre";
-      response = await hianimeService.getGenre(selectedGenre, currentPage);
-    } else if (selectedLetter && selectedLetter !== "All") {
-      // Letter filter second priority
-      activeFilter = "letter";
-      response = await hianimeService.getAZList(selectedLetter, currentPage);
+    if (searchQuery) {
+      // Search query - use Search API
+      response = await hianimeService.searchWithPagination(searchQuery, currentPage, {
+        sort: sortBy !== "default" ? sortBy : undefined,
+      });
+      animes = response?.data?.animes || [];
+    } else if (sortBy !== "default") {
+      // Sort only - map to category endpoint where possible
+      const categoryMap: Record<string, string> = {
+        "recently-updated": "recently-updated",
+        "recently-added": "recently-added",
+        "most-watched": "most-popular",
+        "most-favourite": "most-favorite",
+        "score": "top-airing",
+      };
+      
+      if (categoryMap[sortBy]) {
+        response = await hianimeService.getCategory(categoryMap[sortBy], currentPage);
+      } else {
+        // For name sorts, use A-Z list
+        if (sortBy === "name-az") {
+          response = await hianimeService.getAZList("all", currentPage);
+        } else {
+          response = await hianimeService.getCategory("most-popular", currentPage);
+        }
+      }
+      animes = response?.data?.animes || [];
     } else {
-      // Default to category/sort
-      activeFilter = "sort";
-      response = await hianimeService.getCategory(sortBy, currentPage);
+      // Default - most popular
+      response = await hianimeService.getCategory("most-popular", currentPage);
+      animes = response?.data?.animes || [];
     }
   } catch (error) {
     console.error("Failed to fetch anime:", error);
@@ -64,9 +82,9 @@ export default async function AnimePage({ searchParams }: PageProps) {
         hasNextPage: false,
       },
     };
+    animes = [];
   }
 
-  const animes = response?.data?.animes || [];
   const totalPages = response?.data?.totalPages || 1;
 
   // Pagination helper
@@ -101,34 +119,20 @@ export default async function AnimePage({ searchParams }: PageProps) {
     return pages;
   };
 
-  // Build query params
-  const buildUrl = (newParams: { page?: number; letter?: string; sort?: string; genre?: string }) => {
+  // Build query params for search and sort filters
+  const buildUrl = (newParams: { page?: number; q?: string; sort?: string }) => {
     const urlParams = new URLSearchParams();
     
-    // Handle genre
-    if (newParams.genre !== undefined) {
-      if (newParams.genre) urlParams.set("genre", newParams.genre);
-      // When genre changes, reset letter and sort
-    } else if (selectedGenre) {
-      urlParams.set("genre", selectedGenre);
+    // Handle search query
+    const newQuery = newParams.q !== undefined ? newParams.q : searchQuery;
+    if (newQuery) {
+      urlParams.set("q", newQuery);
     }
     
-    // Handle letter (only if no genre)
-    if (!urlParams.has("genre")) {
-      if (newParams.letter !== undefined) {
-        if (newParams.letter && newParams.letter !== "All") urlParams.set("letter", newParams.letter);
-      } else if (selectedLetter && selectedLetter !== "All") {
-        urlParams.set("letter", selectedLetter);
-      }
-    }
-    
-    // Handle sort (only if no genre and no letter)
-    if (!urlParams.has("genre") && !urlParams.has("letter")) {
-      if (newParams.sort !== undefined) {
-        if (newParams.sort && newParams.sort !== "most-popular") urlParams.set("sort", newParams.sort);
-      } else if (sortBy !== "most-popular") {
-        urlParams.set("sort", sortBy);
-      }
+    // Handle sort
+    const newSort = newParams.sort !== undefined ? newParams.sort : sortBy;
+    if (newSort && newSort !== "default") {
+      urlParams.set("sort", newSort);
     }
     
     // Handle page
@@ -142,16 +146,23 @@ export default async function AnimePage({ searchParams }: PageProps) {
     return query ? `/anime?${query}` : "/anime";
   };
 
-  // Get page title based on active filter
+  // Get page title based on active filters
   const getPageTitle = () => {
-    if (selectedGenre) {
-      return `${selectedGenre.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")} Anime`;
-    }
-    if (selectedLetter !== "All") {
-      return `Anime Starting with "${selectedLetter}"`;
-    }
     const sortLabel = SORT_OPTIONS.find(o => o.value === sortBy)?.label;
-    return sortLabel ? `${sortLabel} Anime` : "Anime List";
+    
+    if (searchQuery && sortBy !== "default") {
+      return `Search: "${searchQuery}" • ${sortLabel}`;
+    }
+    
+    if (searchQuery) {
+      return `Search Results: "${searchQuery}"`;
+    }
+    
+    if (sortBy !== "default") {
+      return `${sortLabel} Anime`;
+    }
+    
+    return "Browse Anime";
   };
 
   return (
@@ -164,22 +175,26 @@ export default async function AnimePage({ searchParams }: PageProps) {
           <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1 md:mb-2">
             {getPageTitle()}
           </h1>
-          <p className="text-gray-400 text-sm md:text-base">Browse the entire collection of anime.</p>
+          <p className="text-gray-400 text-sm md:text-base">
+            {searchQuery 
+              ? `Found ${animes.length} results${totalPages > 1 ? ` (Page ${currentPage} of ${totalPages})` : ""}`
+              : "Browse the entire collection of anime."
+            }
+          </p>
         </div>
 
         {/* Filters Row - Mobile Optimized */}
         <div className="flex flex-col gap-3 mb-4 md:mb-6">
-          {/* Top Row: Genre, Sort, View Toggle */}
+          {/* Search Input */}
+          <SearchInput defaultValue={searchQuery} />
+
+          {/* Top Row: Sort and View Toggle */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1">
-              {/* Genre Dropdown */}
-              <GenreDropdown currentGenre={selectedGenre} currentPage={currentPage} />
-
               {/* Sort Dropdown */}
               <SortDropdown
                 options={SORT_OPTIONS}
                 currentValue={sortBy}
-                currentLetter={selectedLetter}
               />
             </div>
 
@@ -188,26 +203,26 @@ export default async function AnimePage({ searchParams }: PageProps) {
           </div>
 
           {/* Active Filter Indicator */}
-          {(selectedGenre || selectedLetter !== "All") && (
+          {(sortBy !== "default" || searchQuery) && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-gray-400 text-xs">Active filters:</span>
-              {selectedGenre && (
+              {searchQuery && (
                 <Link
-                  href={buildUrl({ genre: "", page: 1 })}
+                  href={buildUrl({ q: "", page: 1 })}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-[#f5c518]/20 text-[#f5c518] rounded text-xs hover:bg-[#f5c518]/30 transition-colors"
                 >
-                  <span>Genre: {selectedGenre.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</span>
+                  <span>Search: {searchQuery}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </Link>
               )}
-              {selectedLetter !== "All" && !selectedGenre && (
+              {sortBy !== "default" && (
                 <Link
-                  href={buildUrl({ letter: "All", page: 1 })}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-[#f5c518]/20 text-[#f5c518] rounded text-xs hover:bg-[#f5c518]/30 transition-colors"
+                  href={buildUrl({ sort: "default", page: 1 })}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs hover:bg-blue-500/30 transition-colors"
                 >
-                  <span>Letter: {selectedLetter}</span>
+                  <span>Sort: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}</span>
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -215,25 +230,6 @@ export default async function AnimePage({ searchParams }: PageProps) {
               )}
             </div>
           )}
-        </div>
-
-        {/* Alphabet Filter - Horizontal Scroll on Mobile */}
-        <div className="mb-4 md:mb-6 -mx-3 md:mx-0 px-3 md:px-0">
-          <div className="flex gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide md:flex-wrap md:overflow-x-visible">
-            {ALPHABET.map((letter) => (
-              <Link
-                key={letter}
-                href={buildUrl({ letter, page: 1, genre: "" })}
-                className={`flex-shrink-0 px-2.5 md:px-3 py-1 md:py-1.5 rounded-md text-xs md:text-sm font-medium transition-colors ${
-                  selectedLetter === letter && !selectedGenre
-                    ? "bg-[#f5c518] text-black"
-                    : "bg-[#1e293b] text-gray-300 hover:bg-[#2a3441] border border-[#2a3441]"
-                }`}
-              >
-                {letter}
-              </Link>
-            ))}
-          </div>
         </div>
 
         {/* Anime Grid/List View */}
@@ -389,7 +385,9 @@ export default async function AnimePage({ searchParams }: PageProps) {
               </svg>
             </div>
             <p className="text-gray-500 text-base md:text-lg">No anime found</p>
-            <p className="text-gray-600 text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-gray-600 text-sm mt-1">
+              {searchQuery ? "Try a different search term" : "Try adjusting your filters"}
+            </p>
           </div>
         )}
 

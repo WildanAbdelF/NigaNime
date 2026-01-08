@@ -176,10 +176,11 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
                   )}
                 </div>
 
-                {/* Episode */}
+                {/* Airing indicator */}
                 <div className="text-right">
                   <span className="inline-flex items-center gap-1 bg-[#f5c518]/20 text-[#f5c518] text-xs font-bold px-3 py-1 rounded-full">
-                    EP {item.airingEpisode}
+                    <span className="w-2 h-2 bg-[#f5c518] rounded-full animate-pulse" />
+                    AIRING
                   </span>
                 </div>
               </Link>
