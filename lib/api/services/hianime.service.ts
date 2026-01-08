@@ -113,16 +113,31 @@ export const hianimeService = {
 
   /**
    * Get anime by A-Z list
+   * @param letter - The letter to filter by: "all", "#" (for 0-9), or A-Z
+   * @param page - Page number (default 1)
    */
-  async getAZList(sortOption: string = "all", page: number = 1) {
-    const sort = sortOption.toLowerCase() === "all" ? "all" : sortOption.toLowerCase() === "#" ? "0-9" : sortOption.toLowerCase();
-    return fetchHiAnime<any>(`/azlist/${sort}?page=${page}`);
+  async getAZList(letter: string = "all", page: number = 1) {
+    // Convert letter to API format: "all", "0-9" for "#", or lowercase letter
+    let sortOption: string;
+    if (letter.toLowerCase() === "all") {
+      sortOption = "all";
+    } else if (letter === "#") {
+      sortOption = "0-9";
+    } else {
+      sortOption = letter.toLowerCase();
+    }
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.AZ_LIST(sortOption, page));
   },
 
   /**
    * Get anime by category
+   * Supported categories: "most-favorite", "most-popular", "subbed-anime", 
+   * "dubbed-anime", "recently-updated", "recently-added", "top-upcoming", 
+   * "top-airing", "movie", "special", "ova", "ona", "tv", "completed"
+   * @param category - The category name
+   * @param page - Page number (default 1)
    */
   async getCategory(category: string = "most-popular", page: number = 1) {
-    return fetchHiAnime<any>(`/category/${category}?page=${page}`);
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY(category, page));
   },
 };

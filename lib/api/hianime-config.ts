@@ -34,6 +34,9 @@ export const HIANIME_ENDPOINTS = {
     return url;
   },
   
+  // A-Z List
+  AZ_LIST: (letter: string, page?: number) => `/azlist/${letter}${page ? `?page=${page}` : ""}`,
+  
   // Categories
   TOP_AIRING: "/top-airing",
   MOST_POPULAR: "/most-popular",

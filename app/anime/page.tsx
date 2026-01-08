@@ -2,39 +2,41 @@ import Image from "next/image";
 import Link from "next/link";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api";
+import SortDropdown from "@/components/anime/SortDropdown";
 
 const ALPHABET = ["All", "#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
 const SORT_OPTIONS = [
-  { label: "Most Popular", value: "most-popular" },
+  { label: "Popularity", value: "most-popular" },
   { label: "Most Favorite", value: "most-favorite" },
-  { label: "Top Airing", value: "top-airing" },
   { label: "Latest Episodes", value: "recently-updated" },
   { label: "Recently Added", value: "recently-added" },
+  { label: "Top Airing", value: "top-airing" },
   { label: "Top Upcoming", value: "top-upcoming" },
 ];
 
 interface PageProps {
-  searchParams: { 
+  searchParams: Promise<{ 
     page?: string;
     letter?: string;
     sort?: string;
-  };
+  }>;
 }
 
 export default async function AnimePage({ searchParams }: PageProps) {
-  const currentPage = parseInt(searchParams.page || "1");
-  const selectedLetter = searchParams.letter || "All";
-  const sortBy = searchParams.sort || "most-popular";
+  const params = await searchParams;
+  const currentPage = parseInt(params.page || "1");
+  const selectedLetter = params.letter || "All";
+  const sortBy = params.sort || "most-popular";
 
   // Fetch data based on filter
   let response;
   try {
     if (selectedLetter && selectedLetter !== "All") {
-      // Use A-Z list endpoint
+      // Use A-Z list endpoint when a letter is selected
       response = await hianimeService.getAZList(selectedLetter, currentPage);
     } else {
-      // Use category endpoint for sorting
+      // Use category endpoint for sorting when no letter filter
       response = await hianimeService.getCategory(sortBy, currentPage);
     }
   } catch (error) {
@@ -101,55 +103,74 @@ export default async function AnimePage({ searchParams }: PageProps) {
 
       <main className="pt-20 pb-12 px-4 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-white mb-2">
             Anime List
           </h1>
-          <p className="text-gray-400">
-            {selectedLetter !== "All" 
-              ? `Anime starting with "${selectedLetter}"`
-              : `${SORT_OPTIONS.find(s => s.value === sortBy)?.label || "Most Popular"} Anime`
-            }
-          </p>
+          <p className="text-gray-400">Browse the entire collection of anime.</p>
         </div>
 
         {/* Filters Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          {/* Alphabet Filter */}
-          <div className="flex flex-wrap gap-1">
-            {ALPHABET.map((letter) => (
-              <Link
-                key={letter}
-                href={buildUrl({ letter, page: 1, sort: undefined })}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition-colors flex items-center justify-center ${
-                  selectedLetter === letter
-                    ? "bg-[#f5c518] text-black"
-                    : "bg-[#1a2332] text-gray-300 hover:bg-[#232d3f]"
-                }`}
-              >
-                {letter === "All" ? "All" : letter}
-              </Link>
-            ))}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          {/* Left Side: Genres & Sort Dropdowns */}
+          <div className="flex items-center gap-3">
+            {/* All Genres Dropdown (placeholder for future) */}
+            <div className="relative">
+              <button className="flex items-center gap-2 bg-[#1e293b] text-white px-4 py-2 rounded-lg hover:bg-[#2a3441] transition-colors border border-[#2a3441]">
+                <span>All Genres</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Icon */}
+            <button className="p-2 bg-[#1e293b] rounded-lg hover:bg-[#2a3441] transition-colors border border-[#2a3441]">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+            </button>
+
+            {/* Sort Dropdown */}
+            <SortDropdown
+              options={SORT_OPTIONS}
+              currentValue={sortBy}
+              currentLetter={selectedLetter}
+            />
           </div>
 
-          {/* Sort Dropdown - Only show if no letter is selected */}
-          {selectedLetter === "All" && (
-            <div className="flex flex-wrap items-center gap-2">
-              {SORT_OPTIONS.map((option) => (
-                <Link
-                  key={option.value}
-                  href={buildUrl({ sort: option.value, page: 1, letter: undefined })}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                    sortBy === option.value
-                      ? "bg-[#f5c518] text-black font-medium"
-                      : "bg-[#1a2332] text-gray-300 hover:bg-[#232d3f]"
-                  }`}
-                >
-                  {option.label}
-                </Link>
-              ))}
+          {/* Right Side: Grid/List Toggle */}
+          <div className="flex items-center gap-2">
+            <div className="flex bg-[#1e293b] rounded-lg overflow-hidden border border-[#2a3441]">
+              <button className="p-2.5 bg-[#f5c518] text-black transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z" />
+                </svg>
+              </button>
+              <button className="p-2.5 text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z" />
+                </svg>
+              </button>
             </div>
-          )}
+          </div>
+        </div>
+
+        {/* Alphabet Filter */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {ALPHABET.map((letter) => (
+            <Link
+              key={letter}
+              href={buildUrl({ letter, page: 1, sort: sortBy })}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                selectedLetter === letter
+                  ? "bg-[#f5c518] text-black"
+                  : "bg-[#1e293b] text-gray-300 hover:bg-[#2a3441] border border-[#2a3441]"
+              }`}
+            >
+              {letter}
+            </Link>
+          ))}
         </div>
 
         {/* Anime Grid */}
