@@ -379,11 +379,6 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                 </div>
               )}
 
-              {/* Episode List */}
-              {episodes.length > 0 && (
-                <EpisodeList episodes={episodes} animeId={id} animeTitle={anime.info.name} />
-              )}
-
               {/* Related Animes / Recommendations */}
               {relatedAnimes.length > 0 && (
                 <RecommendationSection recommendations={relatedAnimes} />
