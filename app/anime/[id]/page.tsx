@@ -113,7 +113,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
 
       <main className="pt-16 overflow-hidden">
         {/* Breadcrumb */}
-        <div className="container mx-auto px-4 lg:px-8 py-4 overflow-hidden">
+        <div className="px-4 lg:px-8 py-4 overflow-hidden">
           <nav className="flex items-center gap-2 text-sm text-gray-400 overflow-hidden">
             <Link href="/" className="hover:text-white transition-colors flex-shrink-0">
               Home
@@ -139,7 +139,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 lg:px-8 pb-12 max-w-full overflow-hidden">
+        <div className="px-4 lg:px-8 pb-12 overflow-hidden">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar */}
             <div className="lg:w-64 flex-shrink-0">
