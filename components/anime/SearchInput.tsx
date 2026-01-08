@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "@/lib/api/hianime-config";
 
 interface Suggestion {
   id: string;
@@ -29,7 +28,7 @@ export default function SearchInput({ defaultValue = "" }: SearchInputProps) {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch suggestions
+  // Fetch suggestions via local API route (to avoid CORS)
   const fetchSuggestions = async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setSuggestions([]);
@@ -39,7 +38,7 @@ export default function SearchInput({ defaultValue = "" }: SearchInputProps) {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${HIANIME_CONFIG.BASE_URL}${HIANIME_ENDPOINTS.SEARCH_SUGGESTION}?q=${encodeURIComponent(searchQuery)}`
+        `/api/search/suggestions?q=${encodeURIComponent(searchQuery)}`
       );
       const data = await response.json();
       setSuggestions(data?.data?.suggestions || []);
