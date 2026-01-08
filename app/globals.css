@@ -54,11 +54,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Hide scrollbar for horizontal scroll containers */
-.hide-scrollbar::-webkit-scrollbar {
+.hide-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-.hide-scrollbar {
+.hide-scrollbar,
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

@@ -59,7 +59,7 @@ export default function SortDropdown({ options, currentValue, currentLetter }: S
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-48 bg-[#1e293b] border border-[#2a3441] rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute top-full left-0 mt-2 w-48 bg-[#1e293b] border border-[#2a3441] rounded-lg shadow-xl z-[100] overflow-hidden">
           {options.map((option) => (
             <Link
               key={option.value}

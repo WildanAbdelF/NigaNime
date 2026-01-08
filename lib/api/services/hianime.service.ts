@@ -140,4 +140,13 @@ export const hianimeService = {
   async getCategory(category: string = "most-popular", page: number = 1) {
     return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY(category, page));
   },
+
+  /**
+   * Get anime by genre
+   * @param genre - The genre name (in kebab-case, e.g. "action", "slice-of-life")
+   * @param page - Page number (default 1)
+   */
+  async getGenre(genre: string, page: number = 1) {
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.GENRE(genre, page));
+  },
 };
