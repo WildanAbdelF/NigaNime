@@ -56,7 +56,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
   const releaseDate = getInfoItem(2);
 
   return (
-    <section className="relative w-full h-[400px] md:h-[480px] lg:h-[520px] overflow-hidden bg-[#0f1729]">
+    <section className="relative w-full h-[550px] md:h-[480px] lg:h-[520px] overflow-hidden bg-[#0f1729]">
       {/* Background with gradient overlay */}
       <div className="absolute inset-0">
         {/* Dark gradient overlays */}
@@ -87,10 +87,10 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 container mx-auto px-4 h-full flex items-center">
-        <div className="max-w-2xl">
-          {/* Rank Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#f5c518] text-black px-4 py-1.5 rounded-full text-sm font-bold mb-4">
+      <div className="relative z-20 px-4 md:container md:mx-auto h-full flex items-center pt-8 md:pt-4 pb-24 md:pb-8">
+        <div className="max-w-2xl w-full">
+          {/* Rank Badge - Hidden on mobile */}
+          <div className="hidden md:inline-flex items-center gap-2 bg-[#f5c518] text-black px-4 py-1.5 rounded-full text-sm font-bold mb-4">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
@@ -164,12 +164,12 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Hidden on mobile */}
       {spotlights.length > 1 && (
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors backdrop-blur-sm"
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 items-center justify-center transition-colors backdrop-blur-sm"
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -177,7 +177,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center transition-colors backdrop-blur-sm"
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 items-center justify-center transition-colors backdrop-blur-sm"
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -186,28 +186,26 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
         </>
       )}
 
-      {/* Ranking List Navigation */}
+      {/* Slide Indicator Dots - Hidden on mobile */}
       {spotlights.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2">
-          {spotlights.map((spotlight, index) => (
+        <div className="hidden md:flex absolute bottom-10 left-1/2 -translate-x-1/2 z-30 items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2">
+          {spotlights.map((_, index) => (
             <button
-              key={`nav-${spotlight.id}-${index}`}
+              key={`dot-${index}`}
               onClick={() => goToSlide(index)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              className={`rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? "bg-[#f5c518] text-black scale-110"
-                  : "bg-white/20 text-white hover:bg-white/30"
+                  ? "bg-[#f5c518] w-6 h-2"
+                  : "bg-white/40 hover:bg-white/60 w-2 h-2"
               }`}
-              title={`#${spotlight.rank} ${spotlight.name}`}
-            >
-              {spotlight.rank}
-            </button>
+              aria-label={`Go to slide ${index + 1}`}
+            />
           ))}
         </div>
       )}
 
-      {/* Slide Counter */}
-      <div className="absolute bottom-6 right-8 z-30 text-white/70 text-sm bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
+      {/* Slide Counter - Hidden on mobile */}
+      <div className="hidden md:block absolute bottom-10 right-8 z-30 text-white/70 text-sm bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
         <span className="text-[#f5c518] font-bold">#{current.rank}</span>
         <span> of {spotlights.length}</span>
       </div>
