@@ -108,38 +108,38 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
   const year = moreInfo?.premiered?.match(/\d{4}/)?.[0] || moreInfo?.aired?.match(/\d{4}/)?.[0] || "";
 
   return (
-    <div className="min-h-screen bg-[#0f1729]">
+    <div className="min-h-screen bg-[#0f1729] overflow-x-hidden">
       <Navbar />
 
-      <main className="pt-16">
+      <main className="pt-16 overflow-hidden">
         {/* Breadcrumb */}
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center gap-2 text-sm text-gray-400">
-            <Link href="/" className="hover:text-white transition-colors">
+        <div className="container mx-auto px-4 py-4 overflow-hidden">
+          <nav className="flex items-center gap-2 text-sm text-gray-400 overflow-hidden">
+            <Link href="/" className="hover:text-white transition-colors flex-shrink-0">
               Home
             </Link>
-            <span>›</span>
-            <Link href="/anime" className="hover:text-white transition-colors">
+            <span className="flex-shrink-0">›</span>
+            <Link href="/anime" className="hover:text-white transition-colors flex-shrink-0">
               Anime
             </Link>
-            <span>›</span>
+            <span className="flex-shrink-0">›</span>
             {moreInfo?.genres?.[0] && (
               <>
                 <Link
                   href={`/genre/${moreInfo.genres[0].toLowerCase().replace(/\s+/g, '-')}`}
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors flex-shrink-0"
                 >
                   {moreInfo.genres[0]}
                 </Link>
-                <span>›</span>
+                <span className="flex-shrink-0">›</span>
               </>
             )}
-            <span className="text-white">{anime.info.name}</span>
+            <span className="text-white truncate">{anime.info.name}</span>
           </nav>
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 pb-12">
+        <div className="container mx-auto px-4 pb-12 max-w-full overflow-hidden">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar */}
             <div className="lg:w-64 flex-shrink-0">
@@ -239,14 +239,14 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {/* Title Section */}
               <div className="mb-6">
-                <h1 className="font-heading text-3xl md:text-4xl font-bold text-white mb-1">
+                <h1 className="font-heading text-3xl md:text-4xl font-bold text-white mb-1 break-words">
                   {anime.info.name}
                 </h1>
                 {moreInfo?.japanese && (
-                  <p className="text-gray-400 text-lg italic mb-4">{moreInfo.japanese}</p>
+                  <p className="text-gray-400 text-lg italic mb-4 break-words">{moreInfo.japanese}</p>
                 )}
 
                 {/* Tags */}
@@ -331,9 +331,11 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                   </svg>
                   Synopsis
                 </h2>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                  {anime.info.description || "No synopsis available."}
-                </p>
+                <div className="text-gray-300 leading-relaxed break-words overflow-hidden">
+                  <p className="whitespace-pre-line">
+                    {anime.info.description || "No synopsis available."}
+                  </p>
+                </div>
               </div>
 
               {/* Genres & Themes */}

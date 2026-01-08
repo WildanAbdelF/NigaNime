@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { HiAnimeScheduleItem } from "@/types/hianime";
 
 interface ScheduleSectionProps {
@@ -34,7 +33,8 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
   const [error, setError] = useState(false);
   const [timezone, setTimezone] = useState("");
 
-  const weekDays = getWeekDays();
+  // Memoize weekDays to avoid recreation on every render
+  const weekDays = useMemo(() => getWeekDays(), []);
 
   // Get user timezone
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
     };
 
     fetchSchedule();
-  }, [activeDay]);
+  }, [activeDay, weekDays]);
 
   // Format time until airing
   const formatTimeUntil = (seconds: number) => {

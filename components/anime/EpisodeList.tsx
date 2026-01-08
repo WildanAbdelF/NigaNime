@@ -10,7 +10,7 @@ interface EpisodeListProps {
   animeTitle: string;
 }
 
-export default function EpisodeList({ episodes, animeId, animeTitle }: EpisodeListProps) {
+export default function EpisodeList({ episodes }: EpisodeListProps) {
   const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
