@@ -41,7 +41,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
 
   if (!spotlights || spotlights.length === 0) {
     return (
-      <section className="relative w-full h-[500px] md:h-[600px] bg-gradient-to-br from-[#1a2332] to-[#0f1729] flex items-center justify-center">
+      <section className="relative w-full h-[350px] md:h-[420px] bg-gradient-to-br from-[#1a2332] to-[#0f1729] flex items-center justify-center">
         <p className="text-gray-500">No spotlight anime available</p>
       </section>
     );
@@ -56,7 +56,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
   const releaseDate = getInfoItem(2);
 
   return (
-    <section className="relative w-full h-[500px] md:h-[650px] lg:h-[700px] overflow-hidden bg-[#0f1729]">
+    <section className="relative w-full h-[400px] md:h-[480px] lg:h-[520px] overflow-hidden bg-[#0f1729]">
       {/* Background with gradient overlay */}
       <div className="absolute inset-0">
         {/* Dark gradient overlays */}
@@ -98,13 +98,13 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
           </div>
 
           {/* Title */}
-          <h1 className="font-heading text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 leading-tight drop-shadow-lg">
+          <h1 className="font-heading text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight drop-shadow-lg line-clamp-3">
             {current.name}
           </h1>
 
           {/* Japanese Title */}
           {current.jname && (
-            <p className="text-gray-400 text-lg mb-4 italic">{current.jname}</p>
+            <p className="text-gray-400 text-base mb-4 italic line-clamp-1">{current.jname}</p>
           )}
 
           {/* Meta Info */}
