@@ -147,9 +147,9 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
               </div>
             </div>
           ) : schedule.length > 0 ? (
-            schedule.slice(0, 10).map((item) => (
+            schedule.slice(0, 10).map((item, index) => (
               <Link
-                key={item.id}
+                key={`${item.id}-${index}`}
                 href={`/anime/${item.id}`}
                 className="flex items-center gap-4 bg-[#1a2332] hover:bg-[#232d3f] rounded-lg p-4 transition-colors group"
               >

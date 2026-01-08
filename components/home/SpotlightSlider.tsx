@@ -66,7 +66,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
         {/* Background images with transitions */}
         {spotlights.map((spotlight, index) => (
           <div
-            key={spotlight.id}
+            key={`bg-${spotlight.id}-${index}`}
             className={`absolute inset-0 transition-opacity duration-700 ${
               index === currentIndex ? "opacity-100" : "opacity-0"
             }`}
@@ -191,7 +191,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2">
           {spotlights.map((spotlight, index) => (
             <button
-              key={spotlight.id}
+              key={`nav-${spotlight.id}-${index}`}
               onClick={() => goToSlide(index)}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                 index === currentIndex

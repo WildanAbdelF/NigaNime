@@ -22,9 +22,9 @@ export default function RecommendationSection({ recommendations }: Recommendatio
 
       <div className="relative">
         <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4">
-          {recommendations.slice(0, 12).map((anime) => (
+          {recommendations.slice(0, 12).map((anime, index) => (
             <Link
-              key={anime.id}
+              key={`${anime.id}-${index}`}
               href={`/anime/${anime.id}`}
               className="flex-shrink-0 w-36 group"
             >

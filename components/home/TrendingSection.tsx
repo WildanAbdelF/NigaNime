@@ -84,9 +84,9 @@ export default function TrendingSection({ animes }: TrendingSectionProps) {
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto hide-scrollbar pb-4"
         >
-          {animes.map((anime) => (
+          {animes.map((anime, index) => (
             <Link
-              key={anime.id}
+              key={`${anime.id}-${index}`}
               href={`/anime/${anime.id}`}
               className="flex-shrink-0 w-[180px] group"
             >
