@@ -14,11 +14,14 @@ import type {
  * Handles all HiAnime API calls for streaming data
  */
 
-async function fetchHiAnime<T>(endpoint: string): Promise<T> {
+async function fetchHiAnime<T>(
+  endpoint: string,
+  options?: { revalidate?: number }
+): Promise<T> {
   const url = `${HIANIME_CONFIG.BASE_URL}${endpoint}`;
   
   const response = await fetch(url, {
-    next: { revalidate: 300 }, // Cache for 5 minutes
+    next: { revalidate: options?.revalidate || 300 }, // Cache for 5 minutes by default
   });
 
   if (!response.ok) {
@@ -78,5 +81,48 @@ export const hianimeService = {
    */
   async getSchedule(date: string) {
     return fetchHiAnime<HiAnimeScheduleResponse>(HIANIME_ENDPOINTS.SCHEDULE(date));
+  },
+
+  /**
+   * Get most popular anime
+   */
+  async getMostPopular(page: number = 1) {
+    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.MOST_POPULAR}?page=${page}`);
+  },
+
+  /**
+   * Get most favorite anime
+   */
+  async getMostFavorite(page: number = 1) {
+    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.MOST_FAVORITE}?page=${page}`);
+  },
+
+  /**
+   * Get top airing anime
+   */
+  async getTopAiring(page: number = 1) {
+    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.TOP_AIRING}?page=${page}`);
+  },
+
+  /**
+   * Get latest episodes
+   */
+  async getLatestEpisodes(page: number = 1) {
+    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.LATEST_EPISODES}?page=${page}`);
+  },
+
+  /**
+   * Get anime by A-Z list
+   */
+  async getAZList(sortOption: string = "all", page: number = 1) {
+    const sort = sortOption.toLowerCase() === "all" ? "all" : sortOption.toLowerCase() === "#" ? "0-9" : sortOption.toLowerCase();
+    return fetchHiAnime<any>(`/azlist/${sort}?page=${page}`);
+  },
+
+  /**
+   * Get anime by category
+   */
+  async getCategory(category: string = "most-popular", page: number = 1) {
+    return fetchHiAnime<any>(`/category/${category}?page=${page}`);
   },
 };

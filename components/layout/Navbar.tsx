@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navLinks = [
@@ -11,8 +12,17 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Check if a link is active
+  const isActiveLink = (href: string) => {
+    if (href === "/") {
+      return pathname === "/";
+    }
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-[#0f1729]/95 backdrop-blur-sm border-b border-[#2a3441]">
@@ -48,7 +58,11 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
-              className="text-gray-300 hover:text-white transition-colors font-medium"
+              className={`transition-colors font-medium ${
+                isActiveLink(link.href)
+                  ? "text-[#f5c518]"
+                  : "text-gray-300 hover:text-white"
+              }`}
             >
               {link.name}
             </Link>
@@ -137,7 +151,11 @@ export default function Navbar() {
               key={link.name}
               href={link.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 text-gray-300 hover:text-white bg-[#1a2332] hover:bg-[#232d3f] px-4 py-3 rounded-lg transition-colors font-medium text-lg"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium text-lg ${
+                isActiveLink(link.href)
+                  ? "bg-[#f5c518] text-black"
+                  : "text-gray-300 hover:text-white bg-[#1a2332] hover:bg-[#232d3f]"
+              }`}
             >
               {link.name}
             </Link>
