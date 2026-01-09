@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { HiAnimeEpisode } from "@/types/hianime";
 
@@ -11,7 +11,17 @@ interface EpisodeListProps {
 }
 
 export default function EpisodeList({ episodes }: EpisodeListProps) {
-  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null);
+  // Auto-select first episode on mount
+  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(
+    episodes.length > 0 ? episodes[0] : null
+  );
+  
+  // Update selection if episodes change
+  useEffect(() => {
+    if (episodes.length > 0 && !selectedEpisode) {
+      setSelectedEpisode(episodes[0]);
+    }
+  }, [episodes, selectedEpisode]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const episodesPerPage = 24;

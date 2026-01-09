@@ -15,15 +15,14 @@ interface StreamingSource {
   quality?: string;
 }
 
-interface Subtitle {
-  lang: string;
+interface Track {
   url: string;
+  lang: string;
 }
 
 interface StreamingData {
   sources: StreamingSource[];
-  subtitles: Subtitle[];
-  tracks?: { file: string; label: string; kind: string }[];
+  tracks?: Track[];
   headers?: Record<string, string>;
 }
 
@@ -35,6 +34,12 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
   const [streamingData, setStreamingData] = useState<StreamingData | null>(null);
   const [currentQuality, setCurrentQuality] = useState<string>("auto");
   const [useEmbed, setUseEmbed] = useState(false);
+  const [currentSubtitle, setCurrentSubtitle] = useState<number>(0);
+
+  // Get subtitle tracks (filter out thumbnails)
+  const subtitleTracks = streamingData?.tracks?.filter(
+    (track) => track.lang.toLowerCase() !== "thumbnails"
+  ) || [];
 
   // Generate embed URL based on episode ID
   const getEmbedUrl = () => {
@@ -156,6 +161,45 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
     };
   }, [streamingData]);
 
+  // Add subtitles dynamically after video is ready
+  useEffect(() => {
+    if (!videoRef.current || subtitleTracks.length === 0) return;
+
+    const video = videoRef.current;
+    
+    // Remove existing tracks
+    while (video.firstChild) {
+      video.removeChild(video.firstChild);
+    }
+
+    // Add subtitle tracks dynamically
+    subtitleTracks.forEach((track, index) => {
+      const trackElement = document.createElement("track");
+      trackElement.kind = "subtitles";
+      trackElement.src = `/api/proxy/subtitle?url=${encodeURIComponent(track.url)}`;
+      trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
+      trackElement.label = track.lang;
+      if (index === 0) {
+        trackElement.default = true;
+      }
+      video.appendChild(trackElement);
+    });
+
+    // Enable first track after a delay
+    const enableSubtitle = () => {
+      if (video.textTracks.length > 0) {
+        video.textTracks[0].mode = "showing";
+        setCurrentSubtitle(0);
+      }
+    };
+
+    // Try immediately and also with delay
+    enableSubtitle();
+    const timer = setTimeout(enableSubtitle, 1000);
+
+    return () => clearTimeout(timer);
+  }, [subtitleTracks]);
+
   // If using embed fallback
   if (useEmbed) {
     return (
@@ -215,36 +259,47 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
       )}
 
       {!error && !isLoading && streamingData && (
-        <video
-          ref={videoRef}
-          className="w-full h-full"
-          controls
-          playsInline
-          crossOrigin="anonymous"
-        >
-          {/* Subtitles from tracks array */}
-          {streamingData?.tracks?.filter(t => t.kind === "captions").map((track, index) => (
-            <track
-              key={`track-${index}`}
-              kind="subtitles"
-              src={track.file}
-              srcLang={track.label?.toLowerCase().slice(0, 2) || "en"}
-              label={track.label || "Unknown"}
-              default={track.label?.toLowerCase().includes("english")}
-            />
-          ))}
-          {/* Subtitles from subtitles array */}
-          {streamingData?.subtitles?.map((sub, index) => (
-            <track
-              key={`sub-${index}`}
-              kind="subtitles"
-              src={sub.url}
-              srcLang={sub.lang.toLowerCase().slice(0, 2)}
-              label={sub.lang}
-              default={sub.lang.toLowerCase() === "english"}
-            />
-          ))}
-        </video>
+        <>
+          <video
+            ref={videoRef}
+            className="w-full h-full"
+            controls
+            playsInline
+            crossOrigin="anonymous"
+          />
+
+          {/* Subtitle selector overlay */}
+          {subtitleTracks.length > 0 && (
+            <div className="absolute bottom-16 right-4 flex items-center gap-2">
+              <select
+                value={currentSubtitle}
+                onChange={(e) => {
+                  const index = parseInt(e.target.value);
+                  setCurrentSubtitle(index);
+                  const video = videoRef.current;
+                  if (video) {
+                    // Disable all tracks first
+                    for (let i = 0; i < video.textTracks.length; i++) {
+                      video.textTracks[i].mode = "disabled";
+                    }
+                    // Enable selected track
+                    if (index >= 0 && video.textTracks[index]) {
+                      video.textTracks[index].mode = "showing";
+                    }
+                  }
+                }}
+                className="px-2 py-1 bg-black/80 text-white text-xs rounded border border-white/20 focus:outline-none"
+              >
+                <option value={-1}>Off</option>
+                {subtitleTracks.map((track, index) => (
+                  <option key={index} value={index}>
+                    {track.lang}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
