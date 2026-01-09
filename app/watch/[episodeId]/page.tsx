@@ -10,7 +10,7 @@ import type { HiAnimeEpisode } from "@/types/hianime";
 
 interface WatchPageProps {
   params: Promise<{ episodeId: string }>;
-  searchParams: Promise<{ server?: string; category?: string }>;
+  searchParams: Promise<{ server?: string; category?: string; ep?: string }>;
 }
 
 // Generate metadata for SEO
@@ -44,10 +44,16 @@ export async function generateMetadata({ params }: WatchPageProps): Promise<Meta
 
 export default async function WatchPage({ params, searchParams }: WatchPageProps) {
   const { episodeId } = await params;
-  const { server = "hd-1", category = "sub" } = await searchParams;
+  const { server = "hd-1", category = "sub", ep } = await searchParams;
   
   // Decode the episode ID
-  const decodedEpisodeId = decodeURIComponent(episodeId);
+  let decodedEpisodeId = decodeURIComponent(episodeId);
+  
+  // If ep is provided as a query param (URL format: /watch/anime-id?ep=xxx)
+  // We need to combine them to get the full episodeId format: anime-id?ep=xxx
+  if (ep && !decodedEpisodeId.includes("?ep=")) {
+    decodedEpisodeId = `${decodedEpisodeId}?ep=${ep}`;
+  }
   
   // Extract anime ID from episode ID (format: anime-id?ep=xxx)
   const animeId = decodedEpisodeId.split("?")[0];
@@ -95,10 +101,28 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
 
   const anime = animeData.anime;
 
-  // Get prev/next episodes
-  const currentIndex = episodes.findIndex(ep => ep.episodeId === decodedEpisodeId);
+  // Get prev/next episodes - use first episode (index 0) if current episode not found
+  let currentIndex = episodes.findIndex(ep => ep.episodeId === decodedEpisodeId);
+  if (currentIndex === -1 && episodes.length > 0) {
+    // Try to find by episode number extracted from URL
+    const epMatch = decodedEpisodeId.match(/ep=(\d+)/);
+    if (epMatch) {
+      const epNum = parseInt(epMatch[1]);
+      currentIndex = episodes.findIndex(ep => ep.number === epNum);
+    }
+    // Default to first episode if still not found
+    if (currentIndex === -1) {
+      currentIndex = 0;
+    }
+  }
   const prevEpisode = currentIndex > 0 ? episodes[currentIndex - 1] : null;
   const nextEpisode = currentIndex < episodes.length - 1 ? episodes[currentIndex + 1] : null;
+  
+  // Ensure currentEpisode is set if it wasn't found by exact match
+  if (!currentEpisode && episodes.length > 0) {
+    currentEpisode = episodes[currentIndex];
+    episodeNumber = currentEpisode?.number || 1;
+  }
 
   return (
     <div className="min-h-screen bg-[#0f1729]">

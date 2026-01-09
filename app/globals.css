@@ -53,6 +53,24 @@ h1, h2, h3, h4, h5, h6 {
   background: #3a4451;
 }
 
+/* Thin scrollbar for episode lists */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #3a4451;
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .hide-scrollbar::-webkit-scrollbar,
 .scrollbar-hide::-webkit-scrollbar {

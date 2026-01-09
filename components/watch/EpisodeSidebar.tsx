@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { HiAnimeEpisode } from "@/types/hianime";
@@ -22,6 +22,23 @@ export default function EpisodeSidebar({
 }: EpisodeSidebarProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [searchQuery, setSearchQuery] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
+  const activeEpisodeRef = useRef<HTMLAnchorElement>(null);
+
+  // Scroll to current episode on mount
+  useEffect(() => {
+    if (activeEpisodeRef.current && listRef.current) {
+      const container = listRef.current;
+      const activeElement = activeEpisodeRef.current;
+      
+      // Calculate scroll position to center the active episode
+      const containerHeight = container.clientHeight;
+      const activeTop = activeElement.offsetTop;
+      const activeHeight = activeElement.clientHeight;
+      
+      container.scrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
+    }
+  }, [currentEpisodeId]);
 
   // Filter episodes by search
   const filteredEpisodes = episodes.filter((ep) => {
@@ -85,8 +102,11 @@ export default function EpisodeSidebar({
         </div>
       </div>
 
-      {/* Episode List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Episode List - Scrollable with max height */}
+      <div 
+        ref={listRef}
+        className="flex-1 overflow-y-auto max-h-[500px] scrollbar-thin scrollbar-thumb-[#2a3441] scrollbar-track-transparent"
+      >
         {viewMode === "list" ? (
           <div className="divide-y divide-[#2a3441]">
             {filteredEpisodes.map((episode) => {
@@ -95,6 +115,7 @@ export default function EpisodeSidebar({
               return (
                 <Link
                   key={episode.episodeId}
+                  ref={isActive ? activeEpisodeRef : null}
                   href={`/watch/${encodeURIComponent(episode.episodeId)}?server=${server}&category=${category}`}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                     isActive
