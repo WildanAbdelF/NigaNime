@@ -6,7 +6,7 @@
  */
 
 export const HIANIME_CONFIG = {
-  BASE_URL: "https://aniwatch-api.vercel.app/api/v2/hianime",
+  BASE_URL: "https://niga-nime-api.vercel.app/api/v2/hianime",
 } as const;
 
 export const HIANIME_ENDPOINTS = {

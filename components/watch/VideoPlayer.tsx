@@ -103,14 +103,20 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
       hlsRef.current = null;
     }
 
+    // Use proxy URL to avoid CORS issues
+    const proxyUrl = `/api/proxy/stream?url=${encodeURIComponent(source.url)}`;
+
     if (source.isM3U8 && Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
+        xhrSetup: (xhr) => {
+          xhr.withCredentials = false;
+        },
       });
 
       hlsRef.current = hls;
-      hls.loadSource(source.url);
+      hls.loadSource(proxyUrl);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -133,8 +139,8 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
         }
       });
     } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // Native HLS support (Safari)
-      video.src = source.url;
+      // Native HLS support (Safari) - also use proxy
+      video.src = proxyUrl;
       video.addEventListener("loadedmetadata", () => {
         video.play().catch(() => {});
       });

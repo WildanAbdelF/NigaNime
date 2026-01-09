@@ -7,9 +7,24 @@ export async function GET(request: NextRequest) {
   const server = searchParams.get("server") || "hd-1";
   const category = searchParams.get("category") || "sub";
 
+  console.log("=== Watch Sources API ===");
+  console.log("Raw episodeId:", episodeId);
+  console.log("Server:", server);
+  console.log("Category:", category);
+  console.log("Full URL:", request.url);
+
   if (!episodeId) {
     return NextResponse.json(
       { error: "Episode ID is required" },
+      { status: 400 }
+    );
+  }
+
+  // Check if episodeId contains the ep parameter
+  if (!episodeId.includes("?ep=") && !episodeId.includes("ep=")) {
+    console.error("Invalid episode ID format - missing ep parameter:", episodeId);
+    return NextResponse.json(
+      { error: "Invalid episode ID format. Expected format: anime-id?ep=xxx", received: episodeId },
       { status: 400 }
     );
   }
