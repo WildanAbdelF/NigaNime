@@ -172,6 +172,12 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
       video.removeChild(video.firstChild);
     }
 
+    // Find English track index (default to first if not found)
+    const englishIndex = subtitleTracks.findIndex(
+      (track) => track.lang.toLowerCase().includes("english")
+    );
+    const defaultIndex = englishIndex >= 0 ? englishIndex : 0;
+
     // Add subtitle tracks dynamically
     subtitleTracks.forEach((track, index) => {
       const trackElement = document.createElement("track");
@@ -179,17 +185,17 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
       trackElement.src = `/api/proxy/subtitle?url=${encodeURIComponent(track.url)}`;
       trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
       trackElement.label = track.lang;
-      if (index === 0) {
+      if (index === defaultIndex) {
         trackElement.default = true;
       }
       video.appendChild(trackElement);
     });
 
-    // Enable first track after a delay
+    // Enable English/default track after a delay
     const enableSubtitle = () => {
-      if (video.textTracks.length > 0) {
-        video.textTracks[0].mode = "showing";
-        setCurrentSubtitle(0);
+      if (video.textTracks.length > 0 && video.textTracks[defaultIndex]) {
+        video.textTracks[defaultIndex].mode = "showing";
+        setCurrentSubtitle(defaultIndex);
       }
     };
 
@@ -203,7 +209,7 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
   // If using embed fallback
   if (useEmbed) {
     return (
-      <div className="relative w-full bg-black aspect-video">
+      <div className="relative w-full max-w-[1100px] bg-black aspect-video rounded-lg overflow-hidden">
         <iframe
           src={getEmbedUrl()}
           className="w-full h-full"
@@ -222,7 +228,7 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
   }
 
   return (
-    <div className="relative w-full bg-black aspect-video">
+    <div className="relative w-full max-w-[1100px] bg-black aspect-video rounded-lg overflow-hidden">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0f1729]">
           <div className="flex flex-col items-center gap-3">
@@ -267,39 +273,39 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
             playsInline
             crossOrigin="anonymous"
           />
-
-          {/* Subtitle selector overlay */}
-          {subtitleTracks.length > 0 && (
-            <div className="absolute bottom-16 right-4 flex items-center gap-2">
-              <select
-                value={currentSubtitle}
-                onChange={(e) => {
-                  const index = parseInt(e.target.value);
-                  setCurrentSubtitle(index);
-                  const video = videoRef.current;
-                  if (video) {
-                    // Disable all tracks first
-                    for (let i = 0; i < video.textTracks.length; i++) {
-                      video.textTracks[i].mode = "disabled";
-                    }
-                    // Enable selected track
-                    if (index >= 0 && video.textTracks[index]) {
-                      video.textTracks[index].mode = "showing";
-                    }
-                  }
-                }}
-                className="px-2 py-1 bg-black/80 text-white text-xs rounded border border-white/20 focus:outline-none"
-              >
-                <option value={-1}>Off</option>
-                {subtitleTracks.map((track, index) => (
-                  <option key={index} value={index}>
-                    {track.lang}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </>
+      )}
+
+      {/* Subtitle selector - positioned outside video controls */}
+      {!error && !isLoading && subtitleTracks.length > 0 && (
+        <div className="absolute top-2 right-2 z-10">
+          <select
+            value={currentSubtitle}
+            onChange={(e) => {
+              const index = parseInt(e.target.value);
+              setCurrentSubtitle(index);
+              const video = videoRef.current;
+              if (video) {
+                // Disable all tracks first
+                for (let i = 0; i < video.textTracks.length; i++) {
+                  video.textTracks[i].mode = "disabled";
+                }
+                // Enable selected track
+                if (index >= 0 && video.textTracks[index]) {
+                  video.textTracks[index].mode = "showing";
+                }
+              }
+            }}
+            className="px-3 py-1.5 bg-black/70 hover:bg-black/90 text-white text-sm rounded-lg border border-white/20 focus:outline-none focus:border-[#f5c518] cursor-pointer transition-colors"
+          >
+            <option value={-1}>Subtitle: Off</option>
+            {subtitleTracks.map((track, index) => (
+              <option key={index} value={index}>
+                {track.lang}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
     </div>
   );

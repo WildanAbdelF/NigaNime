@@ -128,13 +128,13 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
     <div className="min-h-screen bg-[#0f1729]">
       <Navbar />
 
-      <main className="pt-16">
-        <div className="max-w-[1800px] mx-auto">
-          <div className="flex flex-col lg:flex-row">
+      <main className="pt-[10px]">
+        <div className="max-w-[1600px] mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Main Content */}
-            <div className="flex-1 lg:pr-0">
+            <div className="flex-1 min-w-0">
               {/* Breadcrumb */}
-              <div className="px-4 py-3 text-sm text-gray-400">
+              <div className="py-2 text-sm text-gray-400">
                 <a href="/" className="hover:text-[#f5c518] transition-colors">Home</a>
                 <span className="mx-2">›</span>
                 <a href={`/anime/${animeId}`} className="hover:text-[#f5c518] transition-colors">
@@ -145,14 +145,16 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
               </div>
 
               {/* Video Player */}
-              <VideoPlayer
-                episodeId={decodedEpisodeId}
-                server={server}
-                category={category}
-              />
+              <div className="rounded-lg overflow-hidden">
+                <VideoPlayer
+                  episodeId={decodedEpisodeId}
+                  server={server}
+                  category={category}
+                />
+              </div>
 
               {/* Episode Navigation */}
-              <div className="flex items-center justify-between px-4 py-3 bg-[#1a2332] border-b border-[#2a3441]">
+              <div className="flex items-center justify-between px-4 py-3 bg-[#1a2332] rounded-lg mt-4">
                 {prevEpisode ? (
                   <a
                     href={`/watch/${encodeURIComponent(prevEpisode.episodeId)}?server=${server}&category=${category}`}
@@ -201,14 +203,16 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
             </div>
 
             {/* Episode Sidebar */}
-            <div className="w-full lg:w-[380px] lg:border-l border-[#2a3441]">
-              <EpisodeSidebar
-                animeId={animeId}
-                episodes={episodes}
-                currentEpisodeId={decodedEpisodeId}
-                server={server}
-                category={category}
-              />
+            <div className="w-full lg:w-[350px] lg:flex-shrink-0">
+              <div className="bg-[#1a2332] rounded-lg overflow-hidden lg:sticky lg:top-20">
+                <EpisodeSidebar
+                  animeId={animeId}
+                  episodes={episodes}
+                  currentEpisodeId={decodedEpisodeId}
+                  server={server}
+                  category={category}
+                />
+              </div>
             </div>
           </div>
         </div>
