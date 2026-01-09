@@ -78,7 +78,8 @@ export interface Top10Response {
 // ============================================
 
 export interface HiAnimeHomeResponse {
-  success: boolean;
+  success?: boolean;
+  status?: number;
   data: {
     spotlightAnimes: SpotlightAnime[];
     trendingAnimes: TrendingAnime[];
@@ -263,10 +264,12 @@ export interface HiAnimeScheduleItem {
   jname: string;
   airingTimestamp: number;
   secondsUntilAiring: number;
+  episode?: number;
 }
 
 export interface HiAnimeScheduleResponse {
-  success: boolean;
+  success?: boolean;
+  status?: number;
   data: {
     scheduledAnimes: HiAnimeScheduleItem[];
   };

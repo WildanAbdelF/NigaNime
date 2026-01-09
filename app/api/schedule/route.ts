@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await hianimeService.getSchedule(date);
-    return NextResponse.json(response);
+    // Normalize response format - support both success and status
+    return NextResponse.json({
+      success: response.success || response.status === 200,
+      data: response.data
+    });
   } catch (error) {
     console.error("Schedule API error:", error);
     return NextResponse.json(

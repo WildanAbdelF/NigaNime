@@ -11,7 +11,8 @@ export default async function Home() {
   try {
     const homeResponse = await hianimeService.getHome();
 
-    if (homeResponse?.success) {
+    // Support both success: true and status: 200 response formats
+    if (homeResponse?.success || homeResponse?.status === 200) {
       spotlightAnimes = homeResponse.data.spotlightAnimes || [];
       trendingAnimes = homeResponse.data.topAiringAnimes || [];
     }

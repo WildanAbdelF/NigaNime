@@ -161,6 +161,28 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
     };
   }, [streamingData]);
 
+  // Add keyboard controls for skip 10 seconds
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!videoRef.current) return;
+      const video = videoRef.current;
+
+      // Skip forward 10 seconds with right arrow
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        video.currentTime = Math.min(video.currentTime + 10, video.duration);
+      }
+      // Skip backward 10 seconds with left arrow
+      else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        video.currentTime = Math.max(video.currentTime - 10, 0);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
+
   // Add subtitles dynamically after video is ready
   useEffect(() => {
     if (!videoRef.current || subtitleTracks.length === 0) return;
@@ -274,38 +296,6 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
             crossOrigin="anonymous"
           />
         </>
-      )}
-
-      {/* Subtitle selector - positioned outside video controls */}
-      {!error && !isLoading && subtitleTracks.length > 0 && (
-        <div className="absolute top-2 right-2 z-10">
-          <select
-            value={currentSubtitle}
-            onChange={(e) => {
-              const index = parseInt(e.target.value);
-              setCurrentSubtitle(index);
-              const video = videoRef.current;
-              if (video) {
-                // Disable all tracks first
-                for (let i = 0; i < video.textTracks.length; i++) {
-                  video.textTracks[i].mode = "disabled";
-                }
-                // Enable selected track
-                if (index >= 0 && video.textTracks[index]) {
-                  video.textTracks[index].mode = "showing";
-                }
-              }
-            }}
-            className="px-3 py-1.5 bg-black/70 hover:bg-black/90 text-white text-sm rounded-lg border border-white/20 focus:outline-none focus:border-[#f5c518] cursor-pointer transition-colors"
-          >
-            <option value={-1}>Subtitle: Off</option>
-            {subtitleTracks.map((track, index) => (
-              <option key={index} value={index}>
-                {track.lang}
-              </option>
-            ))}
-          </select>
-        </div>
       )}
     </div>
   );

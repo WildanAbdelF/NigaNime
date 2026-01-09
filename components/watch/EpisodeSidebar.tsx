@@ -21,7 +21,6 @@ export default function EpisodeSidebar({
   category,
 }: EpisodeSidebarProps) {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [searchQuery, setSearchQuery] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const activeEpisodeRef = useRef<HTMLAnchorElement>(null);
 
@@ -39,16 +38,6 @@ export default function EpisodeSidebar({
       container.scrollTop = activeTop - (containerHeight / 2) + (activeHeight / 2);
     }
   }, [currentEpisodeId]);
-
-  // Filter episodes by search
-  const filteredEpisodes = episodes.filter((ep) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      ep.title?.toLowerCase().includes(query) ||
-      ep.number.toString().includes(query)
-    );
-  });
 
   return (
     <div className="flex flex-col h-full bg-[#0f1729]">
@@ -81,27 +70,6 @@ export default function EpisodeSidebar({
         </div>
       </div>
 
-      {/* Search */}
-      <div className="px-4 py-3 border-b border-[#2a3441]">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search episode..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1a2332] border border-[#2a3441] rounded-lg px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#f5c518] transition-colors"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-      </div>
-
       {/* Episode List - Scrollable with max height */}
       <div 
         ref={listRef}
@@ -109,7 +77,7 @@ export default function EpisodeSidebar({
       >
         {viewMode === "list" ? (
           <div className="divide-y divide-[#2a3441]">
-            {filteredEpisodes.map((episode) => {
+            {episodes.map((episode) => {
               const isActive = episode.episodeId === currentEpisodeId;
               
               return (
@@ -151,7 +119,7 @@ export default function EpisodeSidebar({
           </div>
         ) : (
           <div className="grid grid-cols-5 gap-2 p-4">
-            {filteredEpisodes.map((episode) => {
+            {episodes.map((episode) => {
               const isActive = episode.episodeId === currentEpisodeId;
               
               return (
@@ -172,14 +140,6 @@ export default function EpisodeSidebar({
           </div>
         )}
 
-        {filteredEpisodes.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <svg className="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-gray-500">No episodes found</p>
-          </div>
-        )}
       </div>
 
       {/* Total Episodes */}
