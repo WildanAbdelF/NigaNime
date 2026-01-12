@@ -77,17 +77,28 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
     if (episodesResponse.status === "fulfilled" && episodesResponse.value.data) {
       episodes = episodesResponse.value.data.episodes || [];
       
-      // Find current episode
-      currentEpisode = episodes.find(ep => ep.episodeId === decodedEpisodeId) || null;
-      if (currentEpisode) {
-        episodeNumber = currentEpisode.number;
+      // If no episode specified in URL, use the first episode
+      if (!decodedEpisodeId.includes("?ep=") && episodes.length > 0) {
+        decodedEpisodeId = episodes[0].episodeId;
+        currentEpisode = episodes[0];
+        episodeNumber = episodes[0].number;
       } else {
-        // Try to extract episode number from URL
-        const epMatch = decodedEpisodeId.match(/ep=(\d+)/);
-        if (epMatch) {
-          const epNum = parseInt(epMatch[1]);
-          currentEpisode = episodes.find(ep => ep.number === epNum) || episodes[0] || null;
-          episodeNumber = currentEpisode?.number || 1;
+        // Find current episode
+        currentEpisode = episodes.find(ep => ep.episodeId === decodedEpisodeId) || null;
+        if (currentEpisode) {
+          episodeNumber = currentEpisode.number;
+        } else {
+          // Try to extract episode number from URL
+          const epMatch = decodedEpisodeId.match(/ep=(\d+)/);
+          if (epMatch) {
+            const epNum = parseInt(epMatch[1]);
+            currentEpisode = episodes.find(ep => ep.number === epNum) || episodes[0] || null;
+            episodeNumber = currentEpisode?.number || 1;
+            // Update decodedEpisodeId if we found a matching episode
+            if (currentEpisode) {
+              decodedEpisodeId = currentEpisode.episodeId;
+            }
+          }
         }
       }
     }

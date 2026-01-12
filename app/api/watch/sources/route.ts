@@ -1,6 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { HIANIME_CONFIG } from "@/lib/api/hianime-config";
 
+// Helper function to fetch with retry
+async function fetchWithRetry(url: string, maxRetries: number = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        cache: "no-store",
+      });
+      
+      // If successful or client error (4xx), return immediately
+      if (response.ok || (response.status >= 400 && response.status < 500)) {
+        return response;
+      }
+      
+      // For server errors (5xx), retry
+      if (response.status >= 500) {
+        console.log(`Retry ${i + 1}/${maxRetries} - Server returned ${response.status}`);
+        lastError = new Error(`Server error: ${response.status}`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.log(`Retry ${i + 1}/${maxRetries} - Network error:`, lastError.message);
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  
+  throw lastError || new Error("Max retries exceeded");
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const episodeId = searchParams.get("episodeId");
@@ -35,13 +73,7 @@ export async function GET(request: NextRequest) {
     
     console.log("Fetching sources from:", apiUrl);
 
-    const response = await fetch(apiUrl, {
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      cache: "no-store",
-    });
+    const response = await fetchWithRetry(apiUrl, 3);
 
     const responseText = await response.text();
     console.log("API Response status:", response.status);
@@ -49,6 +81,15 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error("API error response:", responseText);
+      
+      // Try alternative server if primary fails
+      if (response.status === 403 || response.status === 500) {
+        return NextResponse.json(
+          { error: "Streaming source temporarily unavailable. Try a different server or use External Player.", details: responseText },
+          { status: response.status }
+        );
+      }
+      
       return NextResponse.json(
         { error: `API error: ${response.status}`, details: responseText },
         { status: response.status }

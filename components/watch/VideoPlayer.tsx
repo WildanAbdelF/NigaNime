@@ -55,6 +55,14 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
       setIsLoading(true);
       setError(null);
 
+      // Validate episodeId format
+      if (!episodeId || !episodeId.includes("?ep=")) {
+        console.error("Invalid episodeId format:", episodeId);
+        setError("Invalid episode ID format. Please select an episode from the list.");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(
           `/api/watch/sources?episodeId=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`
@@ -64,7 +72,8 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
         
         if (!response.ok) {
           console.error("API Error:", result);
-          throw new Error(result.error || `Failed to fetch streaming sources (${response.status})`);
+          // If server returns error, suggest trying external player
+          throw new Error(result.error || `API error: ${response.status}`);
         }
         
         // Handle response - the API returns { status: 200, data: { sources, subtitles, ... } }
