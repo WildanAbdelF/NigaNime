@@ -26,6 +26,9 @@ interface StreamingData {
   headers?: Record<string, string>;
 }
 
+const STREAM_PROXY_BASE =
+  process.env.NEXT_PUBLIC_STREAM_PROXY ?? "https://niganime-proxy-production.up.railway.app";
+
 export default function VideoPlayer({ episodeId, server, category }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -118,7 +121,7 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
     }
 
     // Use proxy URL to avoid CORS issues
-    const proxyUrl = `/api/proxy/stream?url=${encodeURIComponent(source.url)}`;
+    const proxyUrl = `${STREAM_PROXY_BASE}/stream?url=${encodeURIComponent(source.url)}`;
 
     if (source.isM3U8 && Hls.isSupported()) {
       const hls = new Hls({
@@ -213,7 +216,7 @@ export default function VideoPlayer({ episodeId, server, category }: VideoPlayer
     subtitleTracks.forEach((track, index) => {
       const trackElement = document.createElement("track");
       trackElement.kind = "subtitles";
-      trackElement.src = `/api/proxy/subtitle?url=${encodeURIComponent(track.url)}`;
+      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(track.url)}`;
       trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
       trackElement.label = track.lang;
       if (index === defaultIndex) {
