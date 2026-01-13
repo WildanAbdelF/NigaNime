@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AnimeStream - Watch Your Favorite Anime",
+  title: "NigaNime - Orang Keren Nonton di NigaNime",
   description: "Stream anime online, explore trending anime, schedules, and more",
 };
 
