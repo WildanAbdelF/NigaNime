@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hianimeService } from "@/lib/api";
+import { getScheduleWithArtwork } from "@/lib/schedule";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -13,11 +13,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await hianimeService.getSchedule(date);
-    // Normalize response format - support both success and status
+    const { response, scheduledAnimes } = await getScheduleWithArtwork(date);
+
+    if (!response) {
+      return NextResponse.json(
+        { success: false, error: "Failed to fetch schedule" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: response.success || response.status === 200,
-      data: response.data
+      data: { scheduledAnimes }
     });
   } catch (error) {
     console.error("Schedule API error:", error);

@@ -265,6 +265,7 @@ export interface HiAnimeScheduleItem {
   airingTimestamp: number;
   secondsUntilAiring: number;
   episode?: number;
+  poster?: string;
 }
 
 export interface HiAnimeScheduleResponse {
