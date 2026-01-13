@@ -47,6 +47,7 @@ export interface TrendingAnime {
 export interface HiAnimeCard {
   id: string;
   name: string;
+  jname?: string;
   poster: string;
   duration: string;
   type: string;
