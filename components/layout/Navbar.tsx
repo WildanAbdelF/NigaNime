@@ -59,7 +59,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2">
 
           <span className="font-heading text-xl font-bold text-white">
-            NigaNime
+              Niga<span className="text-[#f5c518]">Nime</span>
           </span>
         </Link>
 
