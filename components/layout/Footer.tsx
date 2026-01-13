@@ -15,7 +15,7 @@ export default function Footer() {
             rel="noopener noreferrer"
             className="text-[#f5c518] hover:underline"
           >
-            Consumet API
+            NigaNime API via Hianime.to
           </Link>
         </p>
       </div>
