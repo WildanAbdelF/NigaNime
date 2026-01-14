@@ -95,7 +95,7 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
         <div className="flex flex-wrap gap-2">
           {(servers[currentCategory as keyof ServersData] || []).map((server) => (
             <a
-              key={server.serverId}
+              key={`${currentCategory}-${server.serverId}-${server.serverName}`}
               href={`/watch/${encodeURIComponent(episodeId)}?server=${server.serverName}&category=${currentCategory}`}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 currentServer === server.serverName

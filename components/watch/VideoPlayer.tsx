@@ -36,7 +36,7 @@ interface StreamingData {
 }
 
 interface VideoPlayerContextValue {
-  videoRef: RefObject<HTMLVideoElement>;
+  videoRef: RefObject<HTMLVideoElement | null>;
   isLoading: boolean;
   isSwitchingQuality: boolean;
   error: string | null;
