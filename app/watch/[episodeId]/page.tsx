@@ -168,32 +168,36 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
                         <PlayerControlRow className="text-white" />
                       </div>
 
-                      <div className="flex items-center justify-between gap-3 text-sm text-gray-300 flex-wrap">
-                        <div className="flex-shrink-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-gray-300 flex-wrap">
+                        <div className="w-full sm:w-auto flex justify-start">
                           {prevEpisode ? (
                             <a
                               href={`/watch/${encodeURIComponent(prevEpisode.episodeId)}?server=${server}&category=${category}`}
-                              className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
+                              className="flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                               </svg>
                               <span className="hidden sm:inline">Prev</span>
+                              <span className="sm:hidden">Prev</span>
                             </a>
                           ) : (
                             <span className="px-4 py-2 text-xs uppercase tracking-widest text-gray-600">Start</span>
                           )}
                         </div>
 
-                        <span className="text-gray-400">Episode {episodeNumber}</span>
+                        <div className="w-full sm:w-auto flex justify-center">
+                          <span className="text-gray-400">Episode {episodeNumber}</span>
+                        </div>
 
-                        <div className="flex-shrink-0">
+                        <div className="w-full sm:w-auto flex justify-end">
                           {nextEpisode ? (
                             <a
                               href={`/watch/${encodeURIComponent(nextEpisode.episodeId)}?server=${server}&category=${category}`}
-                              className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
+                              className="flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
                             >
                               <span className="hidden sm:inline">Next</span>
+                              <span className="sm:hidden">Next</span>
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>

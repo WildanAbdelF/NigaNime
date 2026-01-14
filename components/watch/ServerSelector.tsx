@@ -67,9 +67,9 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
     <div className="px-4 py-4 bg-[#1a2332] border-b border-[#2a3441]">
       <div className="flex flex-col gap-4">
         {/* Category Tabs */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <span className="text-gray-400 text-sm font-medium">SERVERS:</span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {categories.map((cat) => {
               const serverList = servers[cat.key as keyof ServersData] || [];
               if (serverList.length === 0) return null;
@@ -97,11 +97,12 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
             <a
               key={`${currentCategory}-${server.serverId}-${server.serverName}`}
               href={`/watch/${encodeURIComponent(episodeId)}?server=${server.serverName}&category=${currentCategory}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-center ${
                 currentServer === server.serverName
                   ? "bg-[#f5c518] text-black"
                   : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
               }`}
+              style={{ minWidth: "96px" }}
             >
               {server.serverName.toUpperCase()}
             </a>

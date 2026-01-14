@@ -715,8 +715,8 @@ export function PlayerControlRow({ className = "" }: { className?: string } = {}
   } = useVideoPlayerContext();
 
   return (
-    <div className={`flex items-center gap-4 ${className}`.trim()}>
-      <div className="flex items-center gap-2">
+    <div className={`flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 ${className}`.trim()}>
+      <div className="flex flex-wrap items-center gap-2">
         {introRange && (
           <button
             onClick={() => setAutoSkipIntro((prev) => !prev)}
@@ -725,6 +725,7 @@ export function PlayerControlRow({ className = "" }: { className?: string } = {}
                 ? "bg-[#f5c518] text-black"
                 : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
             }`}
+            style={{ minWidth: "140px" }}
           >
             Auto Skip OP: {autoSkipIntro ? "ON" : "OFF"}
           </button>
@@ -737,17 +738,18 @@ export function PlayerControlRow({ className = "" }: { className?: string } = {}
                 ? "bg-[#f5c518] text-black"
                 : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
             }`}
+            style={{ minWidth: "140px" }}
           >
             Auto Skip ED: {autoSkipOutro ? "ON" : "OFF"}
           </button>
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-4 text-xs">
-        <label className="flex items-center gap-2">
+      <div className="md:ml-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 text-xs w-full md:w-auto">
+        <label className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 w-full sm:w-auto">
           <span className="uppercase tracking-widest text-[10px] text-gray-400">Quality</span>
           <select
-            className="rounded-xl bg-white/5 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#f5c518]"
+            className="rounded-xl bg-white/5 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#f5c518] w-full sm:w-[140px]"
             value={currentQuality}
             onChange={(e) => handleQualityChange(e.target.value)}
             disabled={availableQualities.length === 0}
@@ -766,10 +768,10 @@ export function PlayerControlRow({ className = "" }: { className?: string } = {}
           </select>
         </label>
 
-        <label className="flex items-center gap-2">
+        <label className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 w-full sm:w-auto">
           <span className="uppercase tracking-widest text-[10px] text-gray-400">Subtitles</span>
           <select
-            className="rounded-xl bg-white/5 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#f5c518]"
+            className="rounded-xl bg-white/5 px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#f5c518] w-full sm:w-[180px]"
             value={selectedSubtitle === "off" ? "off" : String(selectedSubtitle)}
             onChange={(e) => {
               const value = e.target.value;
