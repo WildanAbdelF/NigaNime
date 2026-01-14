@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api/services";
-import VideoPlayer from "@/components/watch/VideoPlayer";
+import VideoPlayer, { VideoSurface, PlayerControlRow } from "@/components/watch/VideoPlayer";
 import EpisodeSidebar from "@/components/watch/EpisodeSidebar";
 import AnimeInfo from "@/components/watch/AnimeInfo";
 import ServerSelector from "@/components/watch/ServerSelector";
@@ -155,49 +155,58 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
                 <span className="text-white">Episode {episodeNumber}</span>
               </div>
 
-              {/* Video Player */}
-              <div className="rounded-lg overflow-hidden">
-                <VideoPlayer
-                  episodeId={decodedEpisodeId}
-                  server={server}
-                  category={category}
-                />
-              </div>
+              {/* Video Player & Controls */}
+              <VideoPlayer episodeId={decodedEpisodeId} server={server} category={category}>
+                <div className="space-y-4">
+                  <div className="rounded-lg overflow-hidden w-full max-w-[1100px]">
+                    <VideoSurface />
+                  </div>
 
-              {/* Episode Navigation */}
-              <div className="flex items-center justify-between px-4 py-3 bg-[#1a2332] rounded-lg mt-4">
-                {prevEpisode ? (
-                  <a
-                    href={`/watch/${encodeURIComponent(prevEpisode.episodeId)}?server=${server}&category=${category}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    <span className="hidden sm:inline">Prev</span>
-                  </a>
-                ) : (
-                  <div />
-                )}
+                  <div className="bg-[#1a2332] rounded-2xl p-4 text-white shadow-xl w-full max-w-[1100px]">
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-2xl bg-[#0f1729] border border-white/5 p-4 text-white">
+                        <PlayerControlRow className="text-white" />
+                      </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400 text-sm">Episode {episodeNumber}</span>
+                      <div className="flex items-center justify-between gap-3 text-sm text-gray-300 flex-wrap">
+                        <div className="flex-shrink-0">
+                          {prevEpisode ? (
+                            <a
+                              href={`/watch/${encodeURIComponent(prevEpisode.episodeId)}?server=${server}&category=${category}`}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                              <span className="hidden sm:inline">Prev</span>
+                            </a>
+                          ) : (
+                            <span className="px-4 py-2 text-xs uppercase tracking-widest text-gray-600">Start</span>
+                          )}
+                        </div>
+
+                        <span className="text-gray-400">Episode {episodeNumber}</span>
+
+                        <div className="flex-shrink-0">
+                          {nextEpisode ? (
+                            <a
+                              href={`/watch/${encodeURIComponent(nextEpisode.episodeId)}?server=${server}&category=${category}`}
+                              className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
+                            >
+                              <span className="hidden sm:inline">Next</span>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </a>
+                          ) : (
+                            <span className="px-4 py-2 text-xs uppercase tracking-widest text-gray-600">End</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                {nextEpisode ? (
-                  <a
-                    href={`/watch/${encodeURIComponent(nextEpisode.episodeId)}?server=${server}&category=${category}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
-                  >
-                    <span className="hidden sm:inline">Next</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                ) : (
-                  <div />
-                )}
-              </div>
+              </VideoPlayer>
 
               {/* Server Selector */}
               <ServerSelector

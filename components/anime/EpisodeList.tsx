@@ -152,7 +152,7 @@ export default function EpisodeList({ episodes }: EpisodeListProps) {
               </h3>
             </div>
             <Link 
-              href={`/watch/${selectedEpisode.episodeId}`}
+              href={`/watch/${encodeURIComponent(selectedEpisode.episodeId)}`}
               className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

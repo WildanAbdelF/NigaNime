@@ -176,7 +176,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
               {/* Action Buttons */}
               <div className="space-y-3 mb-6">
                 <Link
-                  href={episodes.length > 0 ? `/watch/${episodes[0].episodeId}` : "#"}
+                  href={episodes.length > 0 ? `/watch/${encodeURIComponent(episodes[0].episodeId)}` : "#"}
                   className="w-full flex items-center justify-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold py-3 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

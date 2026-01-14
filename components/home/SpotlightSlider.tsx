@@ -138,7 +138,7 @@ export default function SpotlightSlider({ spotlights }: SpotlightSliderProps) {
           {/* Buttons */}
           <div className="flex flex-wrap gap-4">
             <Link
-              href={`/watch/${current.id}`}
+              href={`/anime/${current.id}`}
               className="inline-flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

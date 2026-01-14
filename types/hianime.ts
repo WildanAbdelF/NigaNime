@@ -219,8 +219,8 @@ export interface HiAnimeSourcesResponse {
   success: boolean;
   data: {
     tracks: HiAnimeTrack[];
-    intro: { start: number; end: number };
-    outro: { start: number; end: number };
+    intro?: { start: number; end: number } | null;
+    outro?: { start: number; end: number } | null;
     sources: HiAnimeSource[];
     anilistID: number | null;
     malID: number | null;
