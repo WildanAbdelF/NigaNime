@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { HiAnimeEpisode } from "@/types/api/hianime";
+import { buildWatchUrl } from "@/lib/utils/watchUrl";
 
 interface EpisodeListProps {
   episodes: HiAnimeEpisode[];
@@ -152,7 +153,7 @@ export default function EpisodeList({ episodes }: EpisodeListProps) {
               </h3>
             </div>
             <Link 
-              href={`/watch/${encodeURIComponent(selectedEpisode.episodeId)}`}
+              href={buildWatchUrl(selectedEpisode.episodeId)}
               className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-semibold px-6 py-3 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

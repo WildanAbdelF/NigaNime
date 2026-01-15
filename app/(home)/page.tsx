@@ -12,8 +12,9 @@ export default async function Home() {
     const homeResponse = await hianimeService.getHome();
 
     // Support both success: true and status: 200 response formats
-    if (homeResponse?.success || homeResponse?.status === 200) {
+    if (homeResponse?.success || homeResponse?.status === 200 || homeResponse?.data) {
       spotlightAnimes = homeResponse.data.spotlightAnimes || [];
+      // Use topAiringAnimes which is HiAnimeCard[] type (has rating, duration, episodes, etc.)
       trendingAnimes = homeResponse.data.topAiringAnimes || [];
     }
   } catch (error) {

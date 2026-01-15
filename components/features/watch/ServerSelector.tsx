@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { buildWatchUrl } from "@/lib/utils/watchUrl";
 
 interface ServerSelectorProps {
   episodeId: string;
@@ -77,7 +78,7 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
               return (
                 <a
                   key={cat.key}
-                  href={`/watch/${encodeURIComponent(episodeId)}?server=${currentServer}&category=${cat.key}`}
+                  href={buildWatchUrl(episodeId, { server: currentServer, category: cat.key })}
                   className={`px-3 py-1 rounded text-xs font-bold transition-all ${
                     currentCategory === cat.key
                       ? cat.color
@@ -96,7 +97,7 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
           {(servers[currentCategory as keyof ServersData] || []).map((server) => (
             <a
               key={`${currentCategory}-${server.serverId}-${server.serverName}`}
-              href={`/watch/${encodeURIComponent(episodeId)}?server=${server.serverName}&category=${currentCategory}`}
+              href={buildWatchUrl(episodeId, { server: server.serverName, category: currentCategory })}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-center ${
                 currentServer === server.serverName
                   ? "bg-[#f5c518] text-black"

@@ -7,6 +7,7 @@ import EpisodeSidebar from "@/components/features/watch/EpisodeSidebar";
 import AnimeInfo from "@/components/features/watch/AnimeInfo";
 import ServerSelector from "@/components/features/watch/ServerSelector";
 import type { HiAnimeEpisode } from "@/types/api/hianime";
+import { buildWatchUrl } from "@/lib/utils/watchUrl";
 
 interface WatchPageProps {
   params: Promise<{ episodeId: string }>;
@@ -172,7 +173,7 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
                         <div className="w-full sm:w-auto flex justify-start">
                           {prevEpisode ? (
                             <a
-                              href={`/watch/${encodeURIComponent(prevEpisode.episodeId)}?server=${server}&category=${category}`}
+                              href={buildWatchUrl(prevEpisode.episodeId, { server, category })}
                               className="flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +194,7 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
                         <div className="w-full sm:w-auto flex justify-end">
                           {nextEpisode ? (
                             <a
-                              href={`/watch/${encodeURIComponent(nextEpisode.episodeId)}?server=${server}&category=${category}`}
+                              href={buildWatchUrl(nextEpisode.episodeId, { server, category })}
                               className="flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto bg-[#0f1729] hover:bg-[#232d3f] rounded-lg text-white transition-colors"
                             >
                               <span className="hidden sm:inline">Next</span>

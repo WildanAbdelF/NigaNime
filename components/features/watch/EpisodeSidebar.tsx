@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { buildWatchUrl } from "@/lib/utils/watchUrl";
 import type { HiAnimeEpisode } from "@/types/api/hianime";
 
 interface EpisodeSidebarProps {
@@ -84,7 +85,7 @@ export default function EpisodeSidebar({
                 <Link
                   key={episode.episodeId}
                   ref={isActive ? activeEpisodeRef : null}
-                  href={`/watch/${encodeURIComponent(episode.episodeId)}?server=${server}&category=${category}`}
+                  href={buildWatchUrl(episode.episodeId, { server, category })}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                     isActive
                       ? "bg-[#f5c518]/10 border-l-2 border-[#f5c518]"
@@ -125,7 +126,7 @@ export default function EpisodeSidebar({
               return (
                 <Link
                   key={episode.episodeId}
-                  href={`/watch/${encodeURIComponent(episode.episodeId)}?server=${server}&category=${category}`}
+                  href={buildWatchUrl(episode.episodeId, { server, category })}
                   className={`aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all ${
                     isActive
                       ? "bg-[#f5c518] text-black"
