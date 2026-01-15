@@ -107,12 +107,13 @@ export default function AnimeInfo({ anime, currentEpisode }: AnimeInfoProps) {
           {anime.moreInfo?.genres && anime.moreInfo.genres.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {anime.moreInfo.genres.slice(0, 5).map((genre, index) => (
-                <span
+                <a
                   key={index}
-                  className="px-2 py-1 bg-[#232d3f] text-gray-300 rounded text-xs hover:bg-[#2a3441] transition-colors"
+                  href={`/genre?g=${genre.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="px-2 py-1 bg-[#232d3f] text-gray-300 rounded text-xs hover:bg-[#f5c518] hover:text-black transition-colors"
                 >
                   {genre}
-                </span>
+                </a>
               ))}
             </div>
           )}

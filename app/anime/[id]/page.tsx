@@ -126,7 +126,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
             {moreInfo?.genres?.[0] && (
               <>
                 <Link
-                  href={`/genre/${moreInfo.genres[0].toLowerCase().replace(/\s+/g, '-')}`}
+                  href={`/genre?g=${moreInfo.genres[0].toLowerCase().replace(/\s+/g, '-')}`}
                   className="hover:text-white transition-colors flex-shrink-0"
                 >
                   {moreInfo.genres[0]}
@@ -349,7 +349,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                     {moreInfo.genres.map((genre) => (
                       <Link
                         key={genre}
-                        href={`/genre/${genre.toLowerCase().replace(/\s+/g, '-')}`}
+                        href={`/genre?g=${genre.toLowerCase().replace(/\s+/g, '-')}`}
                         className="px-4 py-2 bg-[#1a2332] hover:bg-[#232d3f] text-gray-300 text-sm rounded-lg transition-colors border border-gray-700"
                       >
                         {genre}
