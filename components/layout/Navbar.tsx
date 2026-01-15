@@ -9,6 +9,7 @@ const navLinks = [
   { name: "Anime List", href: "/anime" },
   { name: "Trending", href: "/trending" },
   { name: "Schedule", href: "/schedule" },
+  { name: "Genre", href: "/genre" },
 ];
 
 export default function Navbar() {
