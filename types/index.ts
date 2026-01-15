@@ -1,1 +1,1 @@
-export * from "./hianime";
+export * from "./api/hianime";

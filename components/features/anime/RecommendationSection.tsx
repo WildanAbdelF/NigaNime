@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { HiAnimeCard } from "@/types/hianime";
+import type { HiAnimeCard } from "@/types/api/hianime";
 
 interface RecommendationSectionProps {
   recommendations: HiAnimeCard[];

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Navbar, Footer } from "@/components/layout";
-import { ScheduleBoard } from "@/components/schedule";
+import { ScheduleBoard } from "@/components/features/schedule";
 import { getScheduleWithArtwork } from "@/lib/schedule";
-import type { HiAnimeScheduleItem } from "@/types/hianime";
+import type { HiAnimeScheduleItem } from "@/types/api/hianime";
 
 export const metadata: Metadata = {
   title: "Broadcast Schedule | NigaNime",

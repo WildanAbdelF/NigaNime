@@ -1,4 +1,4 @@
-import { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "../hianime-config";
+import { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "../config/hianime-config";
 import type {
   HiAnimeHomeResponse,
   HiAnimeInfoResponse,
@@ -7,7 +7,7 @@ import type {
   HiAnimeSourcesResponse,
   HiAnimeSearchResponse,
   HiAnimeScheduleResponse,
-} from "@/types/hianime";
+} from "@/types/api/hianime";
 
 /**
  * HiAnime Service

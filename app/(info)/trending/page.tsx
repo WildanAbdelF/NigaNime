@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api";
-import type { HiAnimeCard } from "@/types/hianime";
+import type { HiAnimeCard } from "@/types/api/hianime";
 
 export const metadata: Metadata = {
   title: "Trending Anime | NigaNime",

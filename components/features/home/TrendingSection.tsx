@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import type { HiAnimeCard } from "@/types/hianime";
+import type { HiAnimeCard } from "@/types/api/hianime";
 
 interface TrendingSectionProps {
   animes: HiAnimeCard[];

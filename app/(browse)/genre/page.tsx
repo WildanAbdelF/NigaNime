@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import GenreSidebar from "@/components/genre/GenreFilterBar";
-import MobileGenreSelector from "@/components/genre/MobileGenreSelector";
+import GenreSidebar from "@/components/features/genre/GenreFilterBar";
+import MobileGenreSelector from "@/components/features/genre/MobileGenreSelector";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api";
 

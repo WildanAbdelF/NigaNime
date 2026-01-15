@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { HIANIME_CONFIG } from "@/lib/api/hianime-config";
+import { HIANIME_CONFIG } from "@/lib/api/config/hianime-config";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

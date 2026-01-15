@@ -2,11 +2,11 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api/services";
-import VideoPlayer, { VideoSurface, PlayerControlRow } from "@/components/watch/VideoPlayer";
-import EpisodeSidebar from "@/components/watch/EpisodeSidebar";
-import AnimeInfo from "@/components/watch/AnimeInfo";
-import ServerSelector from "@/components/watch/ServerSelector";
-import type { HiAnimeEpisode } from "@/types/hianime";
+import VideoPlayer, { VideoSurface, PlayerControlRow } from "@/components/features/watch/VideoPlayer";
+import EpisodeSidebar from "@/components/features/watch/EpisodeSidebar";
+import AnimeInfo from "@/components/features/watch/AnimeInfo";
+import ServerSelector from "@/components/features/watch/ServerSelector";
+import type { HiAnimeEpisode } from "@/types/api/hianime";
 
 interface WatchPageProps {
   params: Promise<{ episodeId: string }>;

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { HiAnimeEpisode } from "@/types/hianime";
+import type { HiAnimeEpisode } from "@/types/api/hianime";
 
 interface EpisodeSidebarProps {
   animeId: string;

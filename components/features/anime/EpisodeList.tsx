@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import type { HiAnimeEpisode } from "@/types/hianime";
+import type { HiAnimeEpisode } from "@/types/api/hianime";
 
 interface EpisodeListProps {
   episodes: HiAnimeEpisode[];

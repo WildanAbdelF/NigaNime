@@ -1,7 +1,7 @@
 import { Navbar, Footer } from "@/components/layout";
-import { SpotlightSlider, TrendingSection, ScheduleSection } from "@/components/home";
+import { SpotlightSlider, TrendingSection, ScheduleSection } from "@/components/features/home";
 import { hianimeService } from "@/lib/api";
-import type { SpotlightAnime, HiAnimeCard } from "@/types/hianime";
+import type { SpotlightAnime, HiAnimeCard } from "@/types/api/hianime";
 
 export default async function Home() {
   // Fetch data from HiAnime API

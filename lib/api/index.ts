@@ -4,7 +4,7 @@
  */
 
 // Core
-export { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "./hianime-config";
+export { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "./config/hianime-config";
 
 // Services
 export * from "./services";

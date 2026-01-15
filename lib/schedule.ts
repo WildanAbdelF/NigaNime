@@ -1,5 +1,5 @@
 import { hianimeService } from "@/lib/api";
-import type { HiAnimeScheduleItem, HiAnimeScheduleResponse } from "@/types/hianime";
+import type { HiAnimeScheduleItem, HiAnimeScheduleResponse } from "@/types/api/hianime";
 
 interface ScheduleWithArtwork {
   response: HiAnimeScheduleResponse | null;

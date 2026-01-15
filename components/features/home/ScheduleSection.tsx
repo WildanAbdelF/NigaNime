@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
-import type { HiAnimeScheduleItem } from "@/types/hianime";
+import type { HiAnimeScheduleItem } from "@/types/api/hianime";
 
 interface ScheduleSectionProps {
   initialSchedule?: HiAnimeScheduleItem[];

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { HiAnimeScheduleItem } from "@/types/hianime";
+import type { HiAnimeScheduleItem } from "@/types/api/hianime";
 
 interface ScheduleBoardProps {
   initialSchedule?: HiAnimeScheduleItem[];

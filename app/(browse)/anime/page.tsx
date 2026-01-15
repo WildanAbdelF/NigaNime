@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api";
-import SortDropdown from "@/components/anime/SortDropdown";
-import ViewToggle from "@/components/anime/ViewToggle";
-import SearchInput from "@/components/anime/SearchInput";
+import SortDropdown from "@/components/features/anime/SortDropdown";
+import ViewToggle from "@/components/features/anime/ViewToggle";
+import SearchInput from "@/components/features/anime/SearchInput";
 
 // Sort options - values must match Search API sort parameter
 // Valid API values: default, recently-added, recently-updated, score, name-az, most-watched, most-favourite

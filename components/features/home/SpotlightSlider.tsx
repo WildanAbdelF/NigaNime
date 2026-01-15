@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import type { SpotlightAnime } from "@/types/hianime";
+import type { SpotlightAnime } from "@/types/api/hianime";
 
 interface SpotlightSliderProps {
   spotlights: SpotlightAnime[];
