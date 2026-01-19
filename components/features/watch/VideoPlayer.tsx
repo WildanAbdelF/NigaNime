@@ -510,6 +510,11 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       setIsSwitchingQuality(true);
       const levelIndex = hlsQualityMapRef.current[quality];
       if (typeof levelIndex === "number") {
+        // If we are already on the requested level, avoid getting stuck in a loading state
+        if (hlsRef.current.currentLevel === levelIndex) {
+          setIsSwitchingQuality(false);
+          return;
+        }
         hlsRef.current.currentLevel = levelIndex;
       } else {
         setIsSwitchingQuality(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { HiAnimeScheduleItem } from "@/types/api/hianime";
 
 interface ScheduleSectionProps {
