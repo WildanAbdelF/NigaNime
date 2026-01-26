@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import type { ReactNode, Dispatch, SetStateAction, RefObject } from "react";
 import Hls from "hls.js";
+import { markEpisodeWatched, markEpisodeVisited } from "@/lib/utils/watchedHistory";
 
 interface VideoPlayerProps {
   episodeId: string;
@@ -121,6 +122,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const introSkippedRef = useRef(false);
   const outroSkippedRef = useRef(false);
   const hlsQualityMapRef = useRef<Record<string, number>>({});
+  const watchedMarkedRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingQuality, setIsSwitchingQuality] = useState(false);
@@ -191,6 +193,23 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       setCurrentQuality(availableQualities[0]);
     }
   }, [availableQualities, currentQuality]);
+
+  useEffect(() => {
+    // reset per-episode marker so we only mark watch completion once per load
+    watchedMarkedRef.current = false;
+  }, [episodeId]);
+
+  useEffect(() => {
+    const animeId = episodeId.split("?")[0];
+    const epMatch = episodeId.match(/ep=(\d+)/);
+    const episodeNumber = epMatch ? Number(epMatch[1]) : 0;
+
+    markEpisodeVisited(animeId, {
+      episodeId,
+      episodeNumber,
+      visitedAt: Date.now(),
+    });
+  }, [episodeId]);
 
   const getEmbedUrl = () => {
     const animeId = episodeId.split("?")[0];
@@ -389,6 +408,48 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const animeId = episodeId.split("?")[0];
+    const epMatch = episodeId.match(/ep=(\d+)/);
+    const episodeNumber = epMatch ? Number(epMatch[1]) : 0;
+
+    const markWatched = () => {
+      if (watchedMarkedRef.current) return;
+      if (!Number.isFinite(video.duration) || video.duration === 0) return;
+
+      const progress = video.currentTime / video.duration;
+      if (progress >= 0.9 || video.ended) {
+        watchedMarkedRef.current = true;
+        markEpisodeWatched(animeId, {
+          episodeId,
+          episodeNumber,
+          watchedAt: Date.now(),
+        });
+      }
+    };
+
+    const handleEnded = () => {
+      if (watchedMarkedRef.current) return;
+      watchedMarkedRef.current = true;
+      markEpisodeWatched(animeId, {
+        episodeId,
+        episodeNumber,
+        watchedAt: Date.now(),
+      });
+    };
+
+    video.addEventListener("timeupdate", markWatched);
+    video.addEventListener("ended", handleEnded);
+
+    return () => {
+      video.removeEventListener("timeupdate", markWatched);
+      video.removeEventListener("ended", handleEnded);
+    };
+  }, [episodeId]);
 
   useEffect(() => {
     const video = videoRef.current;
