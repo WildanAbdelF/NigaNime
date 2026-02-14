@@ -1,16 +1,16 @@
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
 // Determine referer based on target URL
 function getRefererForUrl(url) {
   try {
     const urlObj = new URL(url);
-    const hostname = urlObj.hostname;
+    const hostname = urlObj.hostname.toLowerCase();
     
-    if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
+    if (hostname.includes('megacloud') || hostname.includes('rapid-cloud') || hostname.includes('biananset') || hostname.includes('kiwi')) {
       return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
     }
-    if (hostname.includes('biananset') || hostname.includes('kiwi')) {
-      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    if (hostname.includes('rabbitstream') || hostname.includes('vidcloud')) {
+      return { referer: 'https://rabbitstream.net/', origin: 'https://rabbitstream.net' };
     }
     
     return { referer: `${urlObj.protocol}//${urlObj.host}/`, origin: `${urlObj.protocol}//${urlObj.host}` };
@@ -55,6 +55,13 @@ exports.handler = async (event) => {
         'Referer': referer,
         'Origin': origin,
         'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
       },
     });
 

@@ -1,32 +1,53 @@
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
 // Determine referer based on target URL
 function getRefererForUrl(url) {
   try {
     const urlObj = new URL(url);
-    const hostname = urlObj.hostname;
+    const hostname = urlObj.hostname.toLowerCase();
     
-    // Common streaming CDN patterns
+    // Common streaming CDN patterns - return full browser-like headers
+    if (hostname.includes('biananset') || hostname.includes('kiwi') || hostname.includes('listeamed') || hostname.includes('akamai')) {
+      return { 
+        referer: 'https://megacloud.tv/', 
+        origin: 'https://megacloud.tv',
+        secFetchSite: 'cross-site'
+      };
+    }
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
-      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+      return { 
+        referer: 'https://megacloud.tv/', 
+        origin: 'https://megacloud.tv',
+        secFetchSite: 'same-origin'
+      };
     }
-    if (hostname.includes('vidcloud') || hostname.includes('vizcloud')) {
-      return { referer: 'https://vidcloud.co/', origin: 'https://vidcloud.co' };
+    if (hostname.includes('vidcloud') || hostname.includes('vizcloud') || hostname.includes('rabbitstream')) {
+      return { 
+        referer: 'https://rabbitstream.net/', 
+        origin: 'https://rabbitstream.net',
+        secFetchSite: 'cross-site'
+      };
     }
-    if (hostname.includes('streamtape')) {
-      return { referer: 'https://streamtape.com/', origin: 'https://streamtape.com' };
-    }
-    if (hostname.includes('mp4upload')) {
-      return { referer: 'https://mp4upload.com/', origin: 'https://mp4upload.com' };
-    }
-    if (hostname.includes('biananset') || hostname.includes('kiwi')) {
-      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    if (hostname.includes('gogoanime') || hostname.includes('gogocdn') || hostname.includes('playgo1')) {
+      return { 
+        referer: 'https://gogoanime.tel/', 
+        origin: 'https://gogoanime.tel',
+        secFetchSite: 'cross-site'
+      };
     }
     
-    // Default - use the same origin
-    return { referer: `${urlObj.protocol}//${urlObj.host}/`, origin: `${urlObj.protocol}//${urlObj.host}` };
+    // Default - use same origin pattern
+    return { 
+      referer: `${urlObj.protocol}//${urlObj.host}/`, 
+      origin: `${urlObj.protocol}//${urlObj.host}`,
+      secFetchSite: 'same-origin'
+    };
   } catch {
-    return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    return { 
+      referer: 'https://megacloud.tv/', 
+      origin: 'https://megacloud.tv',
+      secFetchSite: 'cross-site'
+    };
   }
 }
 
@@ -73,15 +94,24 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { referer, origin } = getRefererForUrl(targetUrl);
+    const { referer, origin, secFetchSite } = getRefererForUrl(targetUrl);
     
+    // Full browser-like headers to bypass CDN protection
     const upstream = await fetch(targetUrl, {
       headers: {
         'User-Agent': USER_AGENT,
         'Referer': process.env.MEGACLOUD_REFERER || referer,
         'Origin': process.env.MEGACLOUD_ORIGIN || origin,
         'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'identity',
+        'Connection': 'keep-alive',
+        'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': secFetchSite,
       },
     });
 
