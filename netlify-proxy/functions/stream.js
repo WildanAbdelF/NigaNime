@@ -1,5 +1,35 @@
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+// Determine referer based on target URL
+function getRefererForUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    
+    // Common streaming CDN patterns
+    if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
+      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    }
+    if (hostname.includes('vidcloud') || hostname.includes('vizcloud')) {
+      return { referer: 'https://vidcloud.co/', origin: 'https://vidcloud.co' };
+    }
+    if (hostname.includes('streamtape')) {
+      return { referer: 'https://streamtape.com/', origin: 'https://streamtape.com' };
+    }
+    if (hostname.includes('mp4upload')) {
+      return { referer: 'https://mp4upload.com/', origin: 'https://mp4upload.com' };
+    }
+    if (hostname.includes('biananset') || hostname.includes('kiwi')) {
+      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    }
+    
+    // Default - use the same origin
+    return { referer: `${urlObj.protocol}//${urlObj.host}/`, origin: `${urlObj.protocol}//${urlObj.host}` };
+  } catch {
+    return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+  }
+}
+
 function rewriteM3u8(manifest, originalUrl, proxyBase) {
   const baseUrl = originalUrl.substring(0, originalUrl.lastIndexOf('/') + 1);
   return manifest
@@ -43,11 +73,13 @@ exports.handler = async (event) => {
   }
 
   try {
+    const { referer, origin } = getRefererForUrl(targetUrl);
+    
     const upstream = await fetch(targetUrl, {
       headers: {
         'User-Agent': USER_AGENT,
-        'Referer': process.env.MEGACLOUD_REFERER || 'https://megacloud.blog/',
-        'Origin': process.env.MEGACLOUD_ORIGIN || 'https://megacloud.blog',
+        'Referer': process.env.MEGACLOUD_REFERER || referer,
+        'Origin': process.env.MEGACLOUD_ORIGIN || origin,
         'Accept': '*/*',
         'Accept-Encoding': 'identity',
       },

@@ -1,5 +1,24 @@
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+// Determine referer based on target URL
+function getRefererForUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    
+    if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
+      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    }
+    if (hostname.includes('biananset') || hostname.includes('kiwi')) {
+      return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+    }
+    
+    return { referer: `${urlObj.protocol}//${urlObj.host}/`, origin: `${urlObj.protocol}//${urlObj.host}` };
+  } catch {
+    return { referer: 'https://megacloud.tv/', origin: 'https://megacloud.tv' };
+  }
+}
+
 exports.handler = async (event) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -28,9 +47,13 @@ exports.handler = async (event) => {
   }
 
   try {
+    const { referer, origin } = getRefererForUrl(targetUrl);
+    
     const upstream = await fetch(targetUrl, {
       headers: {
         'User-Agent': USER_AGENT,
+        'Referer': referer,
+        'Origin': origin,
         'Accept': '*/*',
       },
     });
