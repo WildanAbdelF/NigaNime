@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Niga Proxy - Anime Streaming Proxy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+    .status {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    .endpoint-list {
+      list-style: none;
+    }
+    .endpoint-list li {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      font-family: 'Courier New', monospace;
+    }
+    code {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+    .info-box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    .info-box p {
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Niga Proxy</h1>
+    <p class="subtitle">Proxy streaming dan subtitle untuk anime</p>
+    
+    <div class="status">✅ Service is running</div>
+
+    <h2>📡 Endpoints</h2>
+    <ul class="endpoint-list">
+      <li><code>GET /stream?url={encoded_url}</code></li>
+      <li><code>GET /subtitle?url={encoded_url}</code></li>
+    </ul>
+
+    <div class="info-box">
+      <h2>ℹ️ Information</h2>
+      <p><strong>CORS:</strong> Enabled for all origins (<code>*</code>)</p>
+      <p><strong>Cache:</strong> M3U8 files are not cached, video segments cached for 1 year</p>
+      <p><strong>Supported formats:</strong> HLS (m3u8), TS segments, VTT/SRT subtitles</p>
+    </div>
+
+    <div class="info-box">
+      <h2>🔧 Environment Variables</h2>
+      <p><code>MEGACLOUD_REFERER</code> - Referer header (default: megacloud.blog)</p>
+      <p><code>MEGACLOUD_ORIGIN</code> - Origin header (default: megacloud.blog)</p>
+      <p><code>PUBLIC_PROXY_BASE</code> - Your deployed proxy URL</p>
+    </div>
+  </div>
+</body>
+</html>

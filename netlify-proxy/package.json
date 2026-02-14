@@ -1,0 +1,12 @@
+{
+  "name": "anime-proxy-netlify",
+  "version": "1.0.0",
+  "description": "Netlify proxy for anime streaming",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["proxy", "netlify", "anime"],
+  "author": "",
+  "license": "MIT"
+}
