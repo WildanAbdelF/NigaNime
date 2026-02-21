@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Use Edge Runtime for better performance and different TLS fingerprint
+export const runtime = "edge";
+
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
 // Dynamic referer detection based on CDN hostname
@@ -22,21 +25,22 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('akamaized') ||
       hostname.includes('cloudfront')
     ) {
+      // Use embed page as referer for better compatibility
       return {
-        referer: 'https://megacloud.tv/',
-        origin: 'https://megacloud.tv',
+        referer: 'https://megacloud.club/',
+        origin: 'https://megacloud.club',
       };
     }
     
     // Megacloud direct domains
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
       return {
-        referer: 'https://megacloud.tv/',
-        origin: 'https://megacloud.tv',
+        referer: 'https://megacloud.club/',
+        origin: 'https://megacloud.club',
       };
     }
     
-    // Rabbitstream/Vidcloud
+    // Rabbitstream/Vidcloud (HD-2 server)
     if (hostname.includes('rabbitstream') || hostname.includes('vidcloud') || hostname.includes('dokicloud')) {
       return {
         referer: 'https://rabbitstream.net/',
@@ -58,12 +62,37 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       origin: `${urlObj.protocol}//${urlObj.host}`,
     };
   } catch {
-    // Fallback to megacloud
     return {
-      referer: 'https://megacloud.tv/',
-      origin: 'https://megacloud.tv',
+      referer: 'https://megacloud.club/',
+      origin: 'https://megacloud.club',
     };
   }
+}
+
+// Retry fetch with exponential backoff
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      // If we get a 403, retry with a small delay
+      if (response.status === 403 && attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
+  }
+  
+  throw lastError || new Error("Max retries reached");
 }
 
 export async function GET(request: NextRequest) {
@@ -77,7 +106,7 @@ export async function GET(request: NextRequest) {
     // Get dynamic headers based on target URL
     const { referer, origin } = getHeadersForUrl(url);
     
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         "User-Agent": USER_AGENT,
         "Referer": referer,
@@ -85,7 +114,6 @@ export async function GET(request: NextRequest) {
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "identity",
-        "Connection": "keep-alive",
         "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
         "Sec-Ch-Ua-Mobile": "?0",
         "Sec-Ch-Ua-Platform": '"Windows"',

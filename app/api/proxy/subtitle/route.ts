@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Use Edge Runtime for better performance
+export const runtime = "edge";
+
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
 // Dynamic referer detection based on CDN hostname
@@ -14,13 +17,14 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('stormshade') ||
       hostname.includes('lightningspark') ||
       hostname.includes('fogtwist') ||
+      hostname.includes('rainveil') ||
       hostname.includes('biananset') ||
       hostname.includes('megacloud') ||
       hostname.includes('kiwi')
     ) {
       return {
-        referer: 'https://megacloud.tv/',
-        origin: 'https://megacloud.tv',
+        referer: 'https://megacloud.club/',
+        origin: 'https://megacloud.club',
       };
     }
     
@@ -38,10 +42,35 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://megacloud.tv/',
-      origin: 'https://megacloud.tv',
+      referer: 'https://megacloud.club/',
+      origin: 'https://megacloud.club',
     };
   }
+}
+
+// Retry fetch with exponential backoff
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      if (response.status === 403 && attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+      }
+    }
+  }
+  
+  throw lastError || new Error("Max retries reached");
 }
 
 export async function GET(request: NextRequest) {
@@ -54,7 +83,7 @@ export async function GET(request: NextRequest) {
   try {
     const { referer, origin } = getHeadersForUrl(url);
     
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         "User-Agent": USER_AGENT,
         "Referer": referer,

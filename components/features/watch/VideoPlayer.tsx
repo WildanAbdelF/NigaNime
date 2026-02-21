@@ -292,6 +292,39 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
+        // Retry configuration for handling intermittent 403 errors
+        fragLoadPolicy: {
+          default: {
+            maxTimeToFirstByteMs: 10000,
+            maxLoadTimeMs: 120000,
+            timeoutRetry: {
+              maxNumRetry: 4,
+              retryDelayMs: 500,
+              maxRetryDelayMs: 2000,
+            },
+            errorRetry: {
+              maxNumRetry: 6,
+              retryDelayMs: 500,
+              maxRetryDelayMs: 4000,
+            },
+          },
+        },
+        manifestLoadPolicy: {
+          default: {
+            maxTimeToFirstByteMs: 10000,
+            maxLoadTimeMs: 20000,
+            timeoutRetry: {
+              maxNumRetry: 4,
+              retryDelayMs: 500,
+              maxRetryDelayMs: 2000,
+            },
+            errorRetry: {
+              maxNumRetry: 6,
+              retryDelayMs: 500,
+              maxRetryDelayMs: 4000,
+            },
+          },
+        },
         xhrSetup: (xhr) => {
           xhr.withCredentials = false;
         },
