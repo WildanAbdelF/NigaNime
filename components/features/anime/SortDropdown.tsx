@@ -12,9 +12,10 @@ interface SortOption {
 interface SortDropdownProps {
   options: SortOption[];
   currentValue: string;
+  basePath?: string;
 }
 
-export default function SortDropdown({ options, currentValue }: SortDropdownProps) {
+export default function SortDropdown({ options, currentValue, basePath = "/anime" }: SortDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -38,7 +39,7 @@ export default function SortDropdown({ options, currentValue }: SortDropdownProp
     if (view) params.set("view", view);
     
     const query = params.toString();
-    return query ? `/anime?${query}` : "/anime";
+    return query ? `${basePath}?${query}` : basePath;
   };
 
   useEffect(() => {

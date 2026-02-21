@@ -5,9 +5,10 @@ import { useSearchParams } from "next/navigation";
 
 interface ViewToggleProps {
   currentView: "grid" | "list";
+  basePath?: string;
 }
 
-export default function ViewToggle({ currentView }: ViewToggleProps) {
+export default function ViewToggle({ currentView, basePath = "/anime" }: ViewToggleProps) {
   const searchParams = useSearchParams();
 
   // Build URL preserving existing params but changing view
@@ -19,7 +20,7 @@ export default function ViewToggle({ currentView }: ViewToggleProps) {
       params.set("view", view);
     }
     const query = params.toString();
-    return query ? `/anime?${query}` : "/anime";
+    return query ? `${basePath}?${query}` : basePath;
   };
 
   return (

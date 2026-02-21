@@ -15,9 +15,10 @@ interface Suggestion {
 
 interface SearchInputProps {
   defaultValue?: string;
+  basePath?: string;
 }
 
-export default function SearchInput({ defaultValue = "" }: SearchInputProps) {
+export default function SearchInput({ defaultValue = "", basePath = "/anime" }: SearchInputProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(defaultValue);
@@ -74,7 +75,7 @@ export default function SearchInput({ defaultValue = "" }: SearchInputProps) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("q", query.trim());
       params.delete("page"); // Reset to page 1
-      router.push(`/anime?${params.toString()}`);
+      router.push(`${basePath}?${params.toString()}`);
     }
   };
 

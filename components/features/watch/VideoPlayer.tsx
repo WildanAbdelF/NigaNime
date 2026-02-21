@@ -75,7 +75,7 @@ const useVideoPlayerContext = () => {
 };
 
 const STREAM_PROXY_BASE =
-  process.env.NEXT_PUBLIC_STREAM_PROXY ?? "/api/proxy";
+  process.env.NEXT_PUBLIC_STREAM_PROXY ?? "https://niganime-proxy-v2-production.up.railway.app";
 
 const hexToRgba = (hex: string, opacity: number) => {
   const sanitized = hex.replace("#", "");

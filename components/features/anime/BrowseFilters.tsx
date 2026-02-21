@@ -13,20 +13,24 @@ interface BrowseFiltersProps {
   sortBy: string;
   viewMode: "grid" | "list";
   searchQuery: string;
+  basePath?: string;
+  showSort?: boolean;
 }
 
-export default function BrowseFilters({ sortOptions, sortBy, viewMode, searchQuery }: BrowseFiltersProps) {
+export default function BrowseFilters({ sortOptions, sortBy, viewMode, searchQuery, basePath = "/anime", showSort = true }: BrowseFiltersProps) {
   return (
     <div className="flex flex-col gap-3 mb-4 md:mb-6">
       {/* Search Input */}
-      <SearchInput defaultValue={searchQuery} />
+      <SearchInput defaultValue={searchQuery} basePath={basePath} />
 
       {/* Top Row: Sort and View Toggle */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1">
-          <SortDropdown options={sortOptions} currentValue={sortBy} />
+          {showSort && (
+            <SortDropdown options={sortOptions} currentValue={sortBy} basePath={basePath} />
+          )}
         </div>
-        <ViewToggle currentView={viewMode} />
+        <ViewToggle currentView={viewMode} basePath={basePath} />
       </div>
     </div>
   );
