@@ -1,5 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+
+// Dynamic referer detection based on CDN hostname
+function getHeadersForUrl(targetUrl: string): { referer: string; origin: string } {
+  try {
+    const urlObj = new URL(targetUrl);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    // HiAnime/Megacloud rotating CDN domains
+    // Patterns: stormshade84.live, lightningspark77.pro, fogtwist21.xyz, biananset12.xyz, etc.
+    if (
+      hostname.match(/^[a-z]+\d+\.(live|pro|xyz|club|site|online)$/) ||
+      hostname.includes('stormshade') ||
+      hostname.includes('lightningspark') ||
+      hostname.includes('fogtwist') ||
+      hostname.includes('biananset') ||
+      hostname.includes('kiwi') ||
+      hostname.includes('listeamed') ||
+      hostname.includes('akamaized') ||
+      hostname.includes('cloudfront')
+    ) {
+      return {
+        referer: 'https://megacloud.tv/',
+        origin: 'https://megacloud.tv',
+      };
+    }
+    
+    // Megacloud direct domains
+    if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
+      return {
+        referer: 'https://megacloud.tv/',
+        origin: 'https://megacloud.tv',
+      };
+    }
+    
+    // Rabbitstream/Vidcloud
+    if (hostname.includes('rabbitstream') || hostname.includes('vidcloud') || hostname.includes('dokicloud')) {
+      return {
+        referer: 'https://rabbitstream.net/',
+        origin: 'https://rabbitstream.net',
+      };
+    }
+    
+    // Gogoanime CDNs
+    if (hostname.includes('gogocdn') || hostname.includes('playgo') || hostname.includes('gogoanime')) {
+      return {
+        referer: 'https://gogoanime3.co/',
+        origin: 'https://gogoanime3.co',
+      };
+    }
+    
+    // Default: use target domain as referer
+    return {
+      referer: `${urlObj.protocol}//${urlObj.host}/`,
+      origin: `${urlObj.protocol}//${urlObj.host}`,
+    };
+  } catch {
+    // Fallback to megacloud
+    return {
+      referer: 'https://megacloud.tv/',
+      origin: 'https://megacloud.tv',
+    };
+  }
+}
+
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
 
@@ -8,13 +73,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Get dynamic headers based on target URL
+    const { referer, origin } = getHeadersForUrl(url);
+    
     const response = await fetch(url, {
       headers: {
-        "Referer": "https://megacloud.blog/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Origin": "https://megacloud.blog",
+        "User-Agent": USER_AGENT,
+        "Referer": referer,
+        "Origin": origin,
         "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "identity",
+        "Connection": "keep-alive",
+        "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "cross-site",
       },
     });
 
