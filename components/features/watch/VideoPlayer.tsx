@@ -417,12 +417,12 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     const epMatch = episodeId.match(/ep=(\d+)/);
     const episodeNumber = epMatch ? Number(epMatch[1]) : 0;
 
-    const markWatchedOnProgress = () => {
+    const markWatched = () => {
       if (watchedMarkedRef.current) return;
       if (!Number.isFinite(video.duration) || video.duration === 0) return;
 
       const progress = video.currentTime / video.duration;
-      if (progress >= 0.8) {
+      if (progress >= 0.9 || video.ended) {
         watchedMarkedRef.current = true;
         markEpisodeWatched(animeId, {
           episodeId,
@@ -442,11 +442,11 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       });
     };
 
-    video.addEventListener("timeupdate", markWatchedOnProgress);
+    video.addEventListener("timeupdate", markWatched);
     video.addEventListener("ended", handleEnded);
 
     return () => {
-      video.removeEventListener("timeupdate", markWatchedOnProgress);
+      video.removeEventListener("timeupdate", markWatched);
       video.removeEventListener("ended", handleEnded);
     };
   }, [episodeId]);
