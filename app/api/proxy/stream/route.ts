@@ -9,12 +9,13 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     const hostname = urlObj.hostname.toLowerCase();
     
     // HiAnime/Megacloud rotating CDN domains
-    // Patterns: stormshade84.live, lightningspark77.pro, fogtwist21.xyz, biananset12.xyz, etc.
+    // Patterns: stormshade84.live, lightningspark77.pro, fogtwist21.xyz, rainveil36.xyz, etc.
     if (
       hostname.match(/^[a-z]+\d+\.(live|pro|xyz|club|site|online)$/) ||
       hostname.includes('stormshade') ||
       hostname.includes('lightningspark') ||
       hostname.includes('fogtwist') ||
+      hostname.includes('rainveil') ||
       hostname.includes('biananset') ||
       hostname.includes('kiwi') ||
       hostname.includes('listeamed') ||
