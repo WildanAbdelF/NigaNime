@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Use Edge Runtime for better performance and different TLS fingerprint
-export const runtime = "edge";
+// Use Node.js runtime - Edge was getting blocked by CDN
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // Dynamic referer detection based on CDN hostname
 function getHeadersForUrl(targetUrl: string): { referer: string; origin: string } {
@@ -12,7 +13,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     const hostname = urlObj.hostname.toLowerCase();
     
     // HiAnime/Megacloud rotating CDN domains
-    // Patterns: stormshade84.live, lightningspark77.pro, fogtwist21.xyz, rainveil36.xyz, etc.
+    // Patterns: stormshade84.live, lightningspark77.pro, fogtwist21.xyz, rainveil36.xyz, sunshinerays42.xyz, etc.
     if (
       hostname.match(/^[a-z]+\d+\.(live|pro|xyz|club|site|online)$/) ||
       hostname.includes('stormshade') ||
@@ -20,6 +21,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('fogtwist') ||
       hostname.includes('rainveil') ||
       hostname.includes('biananset') ||
+      hostname.includes('sunshinerays') ||
       hostname.includes('kiwi') ||
       hostname.includes('listeamed') ||
       hostname.includes('akamaized') ||
@@ -27,16 +29,16 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     ) {
       // Use embed page as referer for better compatibility
       return {
-        referer: 'https://megacloud.club/',
-        origin: 'https://megacloud.club',
+        referer: 'https://embed.megacloud.club/',
+        origin: 'https://embed.megacloud.club',
       };
     }
     
     // Megacloud direct domains
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
       return {
-        referer: 'https://megacloud.club/',
-        origin: 'https://megacloud.club',
+        referer: 'https://embed.megacloud.club/',
+        origin: 'https://embed.megacloud.club',
       };
     }
     
@@ -63,23 +65,23 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://megacloud.club/',
-      origin: 'https://megacloud.club',
+      referer: 'https://embed.megacloud.club/',
+      origin: 'https://embed.megacloud.club',
     };
   }
 }
 
 // Retry fetch with exponential backoff
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5): Promise<Response> {
   let lastError: Error | null = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
       
-      // If we get a 403, retry with a small delay
+      // If we get a 403, retry with a longer delay
       if (response.status === 403 && attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
         continue;
       }
       
@@ -87,7 +89,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
       }
     }
   }
@@ -114,7 +116,7 @@ export async function GET(request: NextRequest) {
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "identity",
-        "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
         "Sec-Ch-Ua-Mobile": "?0",
         "Sec-Ch-Ua-Platform": '"Windows"',
         "Sec-Fetch-Dest": "empty",

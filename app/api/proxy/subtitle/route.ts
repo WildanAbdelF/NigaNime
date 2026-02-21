@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Use Edge Runtime for better performance
-export const runtime = "edge";
+// Use Node.js runtime
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // Dynamic referer detection based on CDN hostname
 function getHeadersForUrl(targetUrl: string): { referer: string; origin: string } {
@@ -19,12 +20,13 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('fogtwist') ||
       hostname.includes('rainveil') ||
       hostname.includes('biananset') ||
+      hostname.includes('sunshinerays') ||
       hostname.includes('megacloud') ||
       hostname.includes('kiwi')
     ) {
       return {
-        referer: 'https://megacloud.club/',
-        origin: 'https://megacloud.club',
+        referer: 'https://embed.megacloud.club/',
+        origin: 'https://embed.megacloud.club',
       };
     }
     
@@ -42,14 +44,14 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://megacloud.club/',
-      origin: 'https://megacloud.club',
+      referer: 'https://embed.megacloud.club/',
+      origin: 'https://embed.megacloud.club',
     };
   }
 }
 
 // Retry fetch with exponential backoff
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5): Promise<Response> {
   let lastError: Error | null = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -57,7 +59,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
       const response = await fetch(url, options);
       
       if (response.status === 403 && attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
         continue;
       }
       
@@ -65,7 +67,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
       }
     }
   }
