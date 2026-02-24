@@ -28,9 +28,9 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('akamaized') ||
       hostname.includes('cloudfront')
     ) {
-      // Megacloud CDN - try without Origin header
+      // Megacloud CDN - use the actual CDN domain as referer
       return {
-        referer: 'https://embed.megacloud.club/',
+        referer: `${urlObj.protocol}//${urlObj.host}/`,
         origin: null,
       };
     }
@@ -38,7 +38,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     // Megacloud direct domains
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
       return {
-        referer: 'https://embed.megacloud.club/',
+        referer: 'https://megacloud.tv/',
         origin: null,
       };
     }
@@ -78,11 +78,16 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5)
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, {
+        ...options,
+        // Disable caching completely
+        cache: 'no-store',
+      });
       
       // If we get a 403, retry with a longer delay
       if (response.status === 403 && attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+        console.log(`[Retry ${attempt + 1}] Got 403, waiting ${500 * (attempt + 1)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
         continue;
       }
       
@@ -90,7 +95,8 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5)
     } catch (error) {
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
+        console.log(`[Retry ${attempt + 1}] Error: ${lastError.message}`);
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
       }
     }
   }
@@ -119,7 +125,8 @@ export async function GET(request: NextRequest) {
       "Referer": referer,
       "Accept": "*/*",
       "Accept-Language": "en-US,en;q=0.9",
-      "Accept-Encoding": "identity",
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
       "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
       "Sec-Ch-Ua-Mobile": "?0",
       "Sec-Ch-Ua-Platform": '"Windows"',
@@ -133,7 +140,10 @@ export async function GET(request: NextRequest) {
       headers["Origin"] = origin;
     }
     
-    const response = await fetchWithRetry(url, { headers });
+    const response = await fetchWithRetry(url, { 
+      headers,
+      redirect: 'follow',
+    });
 
     if (!response.ok) {
       console.error(`[Proxy] Failed - Status: ${response.status}, URL: ${url.substring(0, 100)}`);
