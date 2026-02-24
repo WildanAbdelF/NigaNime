@@ -74,8 +74,8 @@ const useVideoPlayerContext = () => {
   return context;
 };
 
-const STREAM_PROXY_BASE =
-  process.env.NEXT_PUBLIC_STREAM_PROXY ?? "https://niganime-proxy-v2-production.up.railway.app";
+// Use Vercel's own API routes for proxying (no external dependency)
+const STREAM_PROXY_BASE = "/api/proxy";
 
 const hexToRgba = (hex: string, opacity: number) => {
   const sanitized = hex.replace("#", "");
@@ -285,8 +285,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       hlsRef.current = null;
     }
 
-    // Direct URL without proxy for Vercel testing
-    const proxyUrl = selectedSource.url;
+    // Use Vercel API proxy to bypass CORS restrictions
+    const proxyUrl = `${STREAM_PROXY_BASE}/stream?url=${encodeURIComponent(selectedSource.url)}`;
 
     if (selectedSource.isM3U8 && Hls.isSupported()) {
       resetHlsQualities();
@@ -500,8 +500,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     subtitleTracks.forEach((track) => {
       const trackElement = document.createElement("track");
       trackElement.kind = "subtitles";
-      // Direct URL without proxy for Vercel testing
-      trackElement.src = track.url;
+      // Use Vercel API proxy for subtitles to bypass CORS
+      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(track.url)}`;
       trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
       trackElement.label = track.lang;
       video.appendChild(trackElement);

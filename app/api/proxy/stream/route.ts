@@ -22,6 +22,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('rainveil') ||
       hostname.includes('biananset') ||
       hostname.includes('sunshinerays') ||
+      hostname.includes('haildrop') ||
       hostname.includes('kiwi') ||
       hostname.includes('listeamed') ||
       hostname.includes('akamaized') ||
