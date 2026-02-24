@@ -26,7 +26,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('kiwi')
     ) {
       return {
-        referer: 'https://megacloud.tv/',
+        referer: 'https://embed.megacloud.club/',
         origin: null,
       };
     }
@@ -45,7 +45,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://megacloud.tv/',
+      referer: 'https://embed.megacloud.club/',
       origin: null,
     };
   }

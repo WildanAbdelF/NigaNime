@@ -28,9 +28,9 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('akamaized') ||
       hostname.includes('cloudfront')
     ) {
-      // Megacloud CDN - no Origin header, simple referer
+      // Megacloud CDN - try without Origin header
       return {
-        referer: 'https://megacloud.tv/',
+        referer: 'https://embed.megacloud.club/',
         origin: null,
       };
     }
@@ -38,7 +38,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     // Megacloud direct domains
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
       return {
-        referer: 'https://megacloud.tv/',
+        referer: 'https://embed.megacloud.club/',
         origin: null,
       };
     }
@@ -66,7 +66,7 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://megacloud.tv/',
+      referer: 'https://embed.megacloud.club/',
       origin: null,
     };
   }
