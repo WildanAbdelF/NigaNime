@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // Dynamic referer detection based on CDN hostname
-function getHeadersForUrl(targetUrl: string): { referer: string; origin: string } {
+function getHeadersForUrl(targetUrl: string): { referer: string; origin: string | null } {
   try {
     const urlObj = new URL(targetUrl);
     const hostname = urlObj.hostname.toLowerCase();
@@ -28,18 +28,18 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       hostname.includes('akamaized') ||
       hostname.includes('cloudfront')
     ) {
-      // Use embed page as referer for better compatibility
+      // Megacloud CDN - no Origin header, simple referer
       return {
-        referer: 'https://embed.megacloud.club/',
-        origin: 'https://embed.megacloud.club',
+        referer: 'https://megacloud.tv/',
+        origin: null,
       };
     }
     
     // Megacloud direct domains
     if (hostname.includes('megacloud') || hostname.includes('rapid-cloud')) {
       return {
-        referer: 'https://embed.megacloud.club/',
-        origin: 'https://embed.megacloud.club',
+        referer: 'https://megacloud.tv/',
+        origin: null,
       };
     }
     
@@ -66,8 +66,8 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
     };
   } catch {
     return {
-      referer: 'https://embed.megacloud.club/',
-      origin: 'https://embed.megacloud.club',
+      referer: 'https://megacloud.tv/',
+      origin: null,
     };
   }
 }
@@ -109,25 +109,34 @@ export async function GET(request: NextRequest) {
     // Get dynamic headers based on target URL
     const { referer, origin } = getHeadersForUrl(url);
     
-    const response = await fetchWithRetry(url, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        "Referer": referer,
-        "Origin": origin,
-        "Accept": "*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "identity",
-        "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"Windows"',
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "cross-site",
-      },
-    });
+    // Log untuk debugging
+    console.log(`[Proxy] Fetching: ${url.substring(0, 100)}...`);
+    console.log(`[Proxy] Using Referer: ${referer}, Origin: ${origin || 'none'}`);
+    
+    // Build headers dynamically
+    const headers: Record<string, string> = {
+      "User-Agent": USER_AGENT,
+      "Referer": referer,
+      "Accept": "*/*",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Accept-Encoding": "identity",
+      "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+      "Sec-Ch-Ua-Mobile": "?0",
+      "Sec-Ch-Ua-Platform": '"Windows"',
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "cross-site",
+    };
+    
+    // Only add Origin if specified (Megacloud works better without it)
+    if (origin) {
+      headers["Origin"] = origin;
+    }
+    
+    const response = await fetchWithRetry(url, { headers });
 
     if (!response.ok) {
-      console.error(`Proxy fetch failed for ${url}: ${response.status}`);
+      console.error(`[Proxy] Failed - Status: ${response.status}, URL: ${url.substring(0, 100)}`);
       return NextResponse.json(
         { error: `Failed to fetch: ${response.status}` },
         { status: response.status }
