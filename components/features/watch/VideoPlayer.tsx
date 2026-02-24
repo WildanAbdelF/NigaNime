@@ -74,8 +74,8 @@ const useVideoPlayerContext = () => {
   return context;
 };
 
-// Proxy Configuration - Using Railway external proxy
-const STREAM_PROXY_BASE = "https://pretty-hope-production.up.railway.app";
+// Use Vercel's own API routes for proxying (no external dependency)
+const STREAM_PROXY_BASE = "/api/proxy";
 
 const hexToRgba = (hex: string, opacity: number) => {
   const sanitized = hex.replace("#", "");
