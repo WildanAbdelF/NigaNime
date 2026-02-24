@@ -285,7 +285,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       hlsRef.current = null;
     }
 
-    const proxyUrl = `${STREAM_PROXY_BASE}/stream?url=${encodeURIComponent(selectedSource.url)}`;
+    // Direct URL without proxy for Vercel testing
+    const proxyUrl = selectedSource.url;
 
     if (selectedSource.isM3U8 && Hls.isSupported()) {
       resetHlsQualities();
@@ -499,7 +500,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     subtitleTracks.forEach((track) => {
       const trackElement = document.createElement("track");
       trackElement.kind = "subtitles";
-      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(track.url)}`;
+      // Direct URL without proxy for Vercel testing
+      trackElement.src = track.url;
       trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
       trackElement.label = track.lang;
       video.appendChild(trackElement);
