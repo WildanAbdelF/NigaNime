@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import type { ReactNode, Dispatch, SetStateAction, RefObject } from "react";
-import { useRouter } from "next/navigation";
 import Hls from "hls.js";
 import { markEpisodeWatched, markEpisodeVisited } from "@/lib/utils/watchedHistory";
 import { buildWatchUrl } from "@/lib/utils/watchUrl";
@@ -120,7 +119,6 @@ const getQualitySortValue = (quality: string) => {
 };
 
 export default function VideoPlayer({ episodeId, server, category, children }: VideoPlayerProps) {
-  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const subtitleTrackRefs = useRef<HTMLTrackElement[]>([]);
@@ -227,6 +225,36 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     return `https://2anime.xyz/embed/${animeId}-episode-${epNum}`;
   };
 
+  // Centralized failover function
+  const triggerFailover = () => {
+    if (failoverAttemptedRef.current) return;
+    failoverAttemptedRef.current = true;
+    
+    console.log(`Server ${server} failed, initiating failover to HD-2...`);
+    setShowFailoverPopup(true);
+    
+    let countdown = 3;
+    setFailoverCountdown(countdown);
+    
+    if (failoverIntervalRef.current) {
+      clearInterval(failoverIntervalRef.current);
+    }
+    
+    failoverIntervalRef.current = setInterval(() => {
+      countdown -= 1;
+      setFailoverCountdown(countdown);
+      
+      if (countdown <= 0) {
+        if (failoverIntervalRef.current) {
+          clearInterval(failoverIntervalRef.current);
+          failoverIntervalRef.current = null;
+        }
+        const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
+        window.location.href = hd2Url;
+      }
+    }, 1000);
+  };
+
   useEffect(() => {
     const fetchSources = async () => {
       setIsLoading(true);
@@ -265,34 +293,9 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
         const errorMessage = err instanceof Error ? err.message : "Failed to load video";
         setError(errorMessage);
         
-        // Auto-failover to HD-2 if current server fails and failover not yet attempted
+        // Auto-failover to HD-2 if not already on HD-2
         if (!failoverAttemptedRef.current && server.toLowerCase() !== "hd-2") {
-          failoverAttemptedRef.current = true;
-          console.log(`Server ${server} failed, initiating failover to HD-2...`);
-          setShowFailoverPopup(true);
-          
-          // Countdown and redirect
-          let countdown = 3;
-          setFailoverCountdown(countdown);
-          
-          // Clear any existing interval
-          if (failoverIntervalRef.current) {
-            clearInterval(failoverIntervalRef.current);
-          }
-          
-          failoverIntervalRef.current = setInterval(() => {
-            countdown -= 1;
-            setFailoverCountdown(countdown);
-            
-            if (countdown <= 0) {
-              if (failoverIntervalRef.current) {
-                clearInterval(failoverIntervalRef.current);
-                failoverIntervalRef.current = null;
-              }
-              const hd2Url = buildWatchUrl(episodeId, { server: "hd-2", category });
-              router.push(hd2Url);
-            }
-          }, 1000);
+          triggerFailover();
         }
       } finally {
         setIsLoading(false);
@@ -333,36 +336,36 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        // Retry configuration for handling intermittent 403 errors
+        // Minimal retries - we handle failover ourselves
         fragLoadPolicy: {
           default: {
-            maxTimeToFirstByteMs: 10000,
-            maxLoadTimeMs: 120000,
+            maxTimeToFirstByteMs: 8000,
+            maxLoadTimeMs: 30000,
             timeoutRetry: {
-              maxNumRetry: 4,
+              maxNumRetry: 2,
               retryDelayMs: 500,
-              maxRetryDelayMs: 2000,
+              maxRetryDelayMs: 1500,
             },
             errorRetry: {
-              maxNumRetry: 6,
+              maxNumRetry: 2,
               retryDelayMs: 500,
-              maxRetryDelayMs: 4000,
+              maxRetryDelayMs: 1500,
             },
           },
         },
         manifestLoadPolicy: {
           default: {
-            maxTimeToFirstByteMs: 10000,
-            maxLoadTimeMs: 20000,
+            maxTimeToFirstByteMs: 8000,
+            maxLoadTimeMs: 15000,
             timeoutRetry: {
-              maxNumRetry: 4,
+              maxNumRetry: 1,
               retryDelayMs: 500,
-              maxRetryDelayMs: 2000,
+              maxRetryDelayMs: 1000,
             },
             errorRetry: {
-              maxNumRetry: 6,
+              maxNumRetry: 1,
               retryDelayMs: 500,
-              maxRetryDelayMs: 4000,
+              maxRetryDelayMs: 1000,
             },
           },
         },
@@ -406,59 +409,20 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
 
       const handleLevelSwitched = () => setIsSwitchingQuality(false);
 
-      const hlsErrorRetryCount = { network: 0, media: 0 };
-
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              console.error('HLS Network Error:', data);
-              hlsErrorRetryCount.network += 1;
-              
-              // If network errors persist (403, etc), trigger failover
-              if (hlsErrorRetryCount.network >= 3 && !failoverAttemptedRef.current && server.toLowerCase() !== 'hd-2') {
-                failoverAttemptedRef.current = true;
-                console.log('Persistent network errors detected, triggering failover to HD-2...');
-                setError('Connection failed: Server unreachable');
-                setShowFailoverPopup(true);
-                
-                let countdown = 3;
-                setFailoverCountdown(countdown);
-                
-                // Clear any existing interval
-                if (failoverIntervalRef.current) {
-                  clearInterval(failoverIntervalRef.current);
-                }
-                
-                failoverIntervalRef.current = setInterval(() => {
-                  countdown -= 1;
-                  setFailoverCountdown(countdown);
-                  
-                  if (countdown <= 0) {
-                    if (failoverIntervalRef.current) {
-                      clearInterval(failoverIntervalRef.current);
-                      failoverIntervalRef.current = null;
-                    }
-                    const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
-                    window.location.href = hd2Url;
-                  }
-                }, 1000);
-              } else {
-                hls.startLoad();
-              }
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              console.error('HLS Media Error:', data);
-              hlsErrorRetryCount.media += 1;
-              if (hlsErrorRetryCount.media < 3) {
-                hls.recoverMediaError();
-              } else {
-                setError('Media error: Unable to play video');
-              }
-              break;
-            default:
-              setError('Video playback error');
-              break;
+          console.error('HLS Fatal Error:', data.type, data.details);
+          
+          // Immediately trigger failover on any fatal error
+          if (!failoverAttemptedRef.current && server.toLowerCase() !== 'hd-2') {
+            // Not on HD-2 yet, failover to HD-2
+            triggerFailover();
+          } else if (server.toLowerCase() === 'hd-2') {
+            // Already on HD-2 and still failing
+            setError('Server tidak tersedia. Coba lagi nanti atau gunakan server lain.');
+          } else {
+            // Failover already attempted
+            setError('Video playback error');
           }
         }
       });
@@ -839,7 +803,7 @@ export function VideoSurface() {
           </div>
         </div>
       )}
-      {(isLoading || isSwitchingQuality) && (
+      {(isLoading || isSwitchingQuality) && !showFailoverPopup && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0f1729]">
           <div className="w-12 h-12 border-4 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400 text-sm mt-3">
@@ -848,7 +812,7 @@ export function VideoSurface() {
         </div>
       )}
 
-      {error && (
+      {error && !showFailoverPopup && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0f1729]">
           <div className="flex flex-col items-center gap-4 text-center px-4">
             <svg className="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
