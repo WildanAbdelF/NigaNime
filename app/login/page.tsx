@@ -157,7 +157,7 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
+          <div className="flex items-center gap-4 my-3">
             <div className="flex-1 h-px bg-[#2a3441]" />
             <span className="text-gray-500 text-sm">or</span>
             <div className="flex-1 h-px bg-[#2a3441]" />
