@@ -51,15 +51,15 @@ function ProfileContent() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        if (activeTab === "favorites") {
-          const res = await fetch("/api/user/favorites");
-          const json = await res.json();
-          setFavorites(json.data || []);
-        } else {
-          const res = await fetch("/api/user/history?limit=100");
-          const json = await res.json();
-          setHistory(json.data || []);
-        }
+        // Always fetch both so counts stay accurate
+        const [favRes, histRes] = await Promise.all([
+          fetch("/api/user/favorites"),
+          fetch("/api/user/history?limit=100"),
+        ]);
+        const favJson = await favRes.json();
+        const histJson = await histRes.json();
+        setFavorites(favJson.data || []);
+        setHistory(histJson.data || []);
       } catch {
         // ignore
       } finally {
