@@ -143,7 +143,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const [showIntroPrompt, setShowIntroPrompt] = useState(false);
   const [showOutroPrompt, setShowOutroPrompt] = useState(false);
   const [showFailoverPopup, setShowFailoverPopup] = useState(false);
-  const [failoverCountdown, setFailoverCountdown] = useState(3);
+  const [failoverCountdown, setFailoverCountdown] = useState(0);
 
   const subtitleTracks = useMemo(
     () => streamingData?.tracks?.filter((track) => track.lang.toLowerCase() !== "thumbnails") || [],
@@ -225,34 +225,25 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     return `https://2anime.xyz/embed/${animeId}-episode-${epNum}`;
   };
 
-  // Centralized failover function
+  // Centralized failover function — instant redirect with brief toast
   const triggerFailover = () => {
     if (failoverAttemptedRef.current) return;
     failoverAttemptedRef.current = true;
     
-    console.log(`Server ${server} failed, initiating failover to HD-2...`);
+    console.log(`Server ${server} failed, instantly switching to HD-2...`);
     setShowFailoverPopup(true);
-    
-    let countdown = 3;
-    setFailoverCountdown(countdown);
+    setFailoverCountdown(1);
     
     if (failoverIntervalRef.current) {
       clearInterval(failoverIntervalRef.current);
     }
     
-    failoverIntervalRef.current = setInterval(() => {
-      countdown -= 1;
-      setFailoverCountdown(countdown);
-      
-      if (countdown <= 0) {
-        if (failoverIntervalRef.current) {
-          clearInterval(failoverIntervalRef.current);
-          failoverIntervalRef.current = null;
-        }
-        const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
-        window.location.href = hd2Url;
-      }
-    }, 1000);
+    // Redirect after 1 second (just enough for user to see the toast)
+    failoverIntervalRef.current = setTimeout(() => {
+      failoverIntervalRef.current = null;
+      const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
+      window.location.href = hd2Url;
+    }, 1000) as unknown as NodeJS.Timeout;
   };
 
   useEffect(() => {
@@ -467,9 +458,9 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
-      // Clear failover interval if exists
+      // Clear failover timeout if exists
       if (failoverIntervalRef.current) {
-        clearInterval(failoverIntervalRef.current);
+        clearTimeout(failoverIntervalRef.current);
         failoverIntervalRef.current = null;
       }
     };
@@ -771,36 +762,14 @@ export function VideoSurface() {
 
   return (
     <div className="relative bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
-      {/* Failover Popup */}
+      {/* Failover Toast — compact notification at top */}
       {showFailoverPopup && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-          <div className="bg-[#1a2332] border-2 border-[#f5c518] rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
-            <div className="flex flex-col items-center gap-4 text-center">
-              {/* Alert Icon */}
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              
-              {/* Title */}
-              <h3 className="text-xl font-bold text-white">Server Error Detected</h3>
-              
-              {/* Message */}
-              <p className="text-gray-300 text-sm">
-                The current server is experiencing issues. Automatically switching to HD-2 server for better playback...
-              </p>
-              
-              {/* Countdown */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 border-4 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
-                <span className="text-3xl font-bold text-[#f5c518]">{failoverCountdown}</span>
-              </div>
-              
-              <p className="text-gray-400 text-xs">
-                Redirecting in {failoverCountdown} second{failoverCountdown !== 1 ? 's' : ''}...
-              </p>
-            </div>
+        <div className="absolute top-0 left-0 right-0 z-50 flex justify-center p-3 animate-fade-in">
+          <div className="bg-[#1a2332] border border-[#f5c518] rounded-xl px-5 py-3 shadow-2xl flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-[#f5c518] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            <span className="text-white text-sm font-medium">
+              Server error — switching to HD-2...
+            </span>
           </div>
         </div>
       )}

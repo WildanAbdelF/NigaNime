@@ -73,21 +73,20 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
 }
 
 // Retry fetch with exponential backoff
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
   let lastError: Error | null = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(url, {
         ...options,
-        // Disable caching completely
         cache: 'no-store',
       });
       
-      // If we get a 403, retry with a longer delay
+      // 403 = CDN blocked, don't waste time retrying many times
       if (response.status === 403 && attempt < maxRetries - 1) {
-        console.log(`[Retry ${attempt + 1}] Got 403, waiting ${500 * (attempt + 1)}ms...`);
-        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        console.log(`[Retry ${attempt + 1}] Got 403, waiting ${300 * (attempt + 1)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
         continue;
       }
       
@@ -96,7 +95,7 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 5)
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
         console.log(`[Retry ${attempt + 1}] Error: ${lastError.message}`);
-        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+        await new Promise(resolve => setTimeout(resolve, 300 * (attempt + 1)));
       }
     }
   }
