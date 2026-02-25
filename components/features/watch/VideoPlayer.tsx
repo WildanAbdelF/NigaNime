@@ -801,8 +801,7 @@ export function VideoSurface() {
           className="w-full h-full border-0"
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          referrerPolicy="origin"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+          referrerPolicy="no-referrer"
         />
         {/* Embed server badge */}
         <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
