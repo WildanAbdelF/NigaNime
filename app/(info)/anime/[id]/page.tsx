@@ -4,8 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api/services";
-import { buildWatchUrl } from "@/lib/utils/watchUrl";
-import { EpisodeList, AnimeTrailer, RecommendationSection } from "@/components/features/anime";
+import { EpisodeList, AnimeTrailer, RecommendationSection, ContinueWatchButton } from "@/components/features/anime";
 import type { HiAnimeEpisode, HiAnimeCard } from "@/types/api/hianime";
 
 // Interface for anime data from HiAnime API
@@ -177,19 +176,16 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
 
               {/* Action Buttons */}
               <div className="space-y-3 mb-6">
-                <Link
-                  href={episodes.length > 0 ? buildWatchUrl(episodes[0].episodeId) : "#"}
-                  className={`w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-lg transition-colors ${
-                    episodes.length > 0
-                      ? "bg-[#f5c518] hover:bg-[#d4a817] text-black"
-                      : "bg-gray-600 text-gray-300 cursor-not-allowed"
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  Watch Now
-                </Link>
+                {episodes.length > 0 ? (
+                  <ContinueWatchButton animeId={id} firstEpisodeId={episodes[0].episodeId} />
+                ) : (
+                  <span className="w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-lg bg-gray-600 text-gray-300 cursor-not-allowed">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Watch Now
+                  </span>
+                )}
                 <button className="w-full flex items-center justify-center gap-2 bg-[#1a2332] hover:bg-[#232d3f] text-white font-semibold py-3 rounded-lg transition-colors border border-gray-700">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

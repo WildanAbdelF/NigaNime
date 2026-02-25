@@ -141,5 +141,25 @@ export const markEpisodeVisited = (animeId: string, entry: VisitedEpisodeEntry) 
   dispatchVisitedEvent(animeId, entry.episodeId);
 };
 
+/**
+ * Returns the most recently visited episode for a given anime,
+ * or null if no episode has been visited yet.
+ */
+export const getLastVisitedEpisode = (animeId: string): VisitedEpisodeEntry | null => {
+  const store = readVisitedStore();
+  const entries = store[animeId];
+  if (!entries) return null;
+  const sorted = Object.values(entries).sort((a, b) => b.visitedAt - a.visitedAt);
+  return sorted.length > 0 ? sorted[0] : null;
+};
+
+/**
+ * Returns all visited episode entries for a given anime, keyed by episodeId.
+ */
+export const getVisitedEpisodeEntries = (animeId: string): Record<string, VisitedEpisodeEntry> => {
+  const store = readVisitedStore();
+  return store[animeId] ?? {};
+};
+
 export const visitedStorageKey = VISITED_STORAGE_KEY;
 export const visitedEventName = VISITED_EVENT;

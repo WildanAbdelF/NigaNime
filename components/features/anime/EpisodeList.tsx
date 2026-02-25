@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { HiAnimeEpisode } from "@/types/api/hianime";
 import { buildWatchUrl } from "@/lib/utils/watchUrl";
+import { getLastVisitedEpisode, getVisitedEpisodeIds } from "@/lib/utils/watchedHistory";
 
 interface EpisodeListProps {
   episodes: HiAnimeEpisode[];
@@ -11,18 +12,35 @@ interface EpisodeListProps {
   animeTitle: string;
 }
 
-export default function EpisodeList({ episodes }: EpisodeListProps) {
-  // Auto-select first episode on mount
-  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(
-    episodes.length > 0 ? episodes[0] : null
-  );
-  
-  // Update selection if episodes change
+export default function EpisodeList({ episodes, animeId }: EpisodeListProps) {
+  const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null);
+  const [visitedIds, setVisitedIds] = useState<Set<string>>(new Set());
+  const [lastVisitedId, setLastVisitedId] = useState<string | null>(null);
+
+  // On mount: pick last visited episode or fall back to first
   useEffect(() => {
-    if (episodes.length > 0 && !selectedEpisode) {
+    const visited = getVisitedEpisodeIds(animeId);
+    setVisitedIds(visited);
+
+    const last = getLastVisitedEpisode(animeId);
+    if (last) {
+      setLastVisitedId(last.episodeId);
+      const found = episodes.find((ep) => ep.episodeId === last.episodeId);
+      if (found) {
+        setSelectedEpisode(found);
+        // Jump to the correct page
+        const idx = episodes.indexOf(found);
+        if (idx >= 0) {
+          setCurrentPage(Math.floor(idx / episodesPerPage) + 1);
+        }
+        return;
+      }
+    }
+    // fallback to first episode
+    if (episodes.length > 0) {
       setSelectedEpisode(episodes[0]);
     }
-  }, [episodes, selectedEpisode]);
+  }, [animeId, episodes]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const episodesPerPage = 24;
@@ -77,25 +95,47 @@ export default function EpisodeList({ episodes }: EpisodeListProps) {
 
       {/* Episode Grid */}
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 mb-4">
-        {paginatedEpisodes.map((episode) => (
-          <button
-            key={episode.episodeId}
-            onClick={() => setSelectedEpisode(episode)}
-            className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-semibold transition-all hover:scale-105 ${
-              selectedEpisode?.episodeId === episode.episodeId
-                ? "bg-[#f5c518] text-black"
-                : episode.isFiller
-                ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
-                : "bg-[#1a2332] text-white hover:bg-[#232d3f]"
-            }`}
-            title={episode.title || `Episode ${episode.number}`}
-          >
-            <span>{episode.number}</span>
-            {episode.isFiller && (
-              <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-orange-500 rounded-full" title="Filler" />
-            )}
-          </button>
-        ))}
+        {paginatedEpisodes.map((episode) => {
+          const isVisited = visitedIds.has(episode.episodeId);
+          const isLastVisited = episode.episodeId === lastVisitedId;
+          return (
+            <button
+              key={episode.episodeId}
+              onClick={() => setSelectedEpisode(episode)}
+              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center text-sm font-semibold transition-all hover:scale-105 ${
+                selectedEpisode?.episodeId === episode.episodeId
+                  ? "bg-[#f5c518] text-black"
+                  : isLastVisited
+                  ? "bg-[#f5c518]/30 text-[#f5c518] ring-2 ring-[#f5c518]"
+                  : isVisited
+                  ? "bg-[#1a2332] text-gray-500"
+                  : episode.isFiller
+                  ? "bg-orange-500/20 text-orange-400 hover:bg-orange-500/30"
+                  : "bg-[#1a2332] text-white hover:bg-[#232d3f]"
+              }`}
+              title={
+                isLastVisited
+                  ? `Last watched – ${episode.title || `Episode ${episode.number}`}`
+                  : episode.title || `Episode ${episode.number}`
+              }
+            >
+              <span>{episode.number}</span>
+              {isLastVisited && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#f5c518] rounded-full flex items-center justify-center">
+                  <svg className="w-2 h-2 text-black" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </span>
+              )}
+              {isVisited && !isLastVisited && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gray-500 rounded-full" />
+              )}
+              {episode.isFiller && !isVisited && !isLastVisited && (
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-orange-500 rounded-full" title="Filler" />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Pagination */}
@@ -122,7 +162,7 @@ export default function EpisodeList({ episodes }: EpisodeListProps) {
       )}
 
       {/* Episode Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
+      <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-gray-400">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 bg-[#1a2332] rounded" />
           <span>Canon</span>
@@ -130,6 +170,16 @@ export default function EpisodeList({ episodes }: EpisodeListProps) {
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 bg-orange-500/20 rounded" />
           <span>Filler</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 bg-[#1a2332] rounded relative">
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-gray-500 rounded-full" />
+          </span>
+          <span className="ml-0.5">Watched</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 bg-[#f5c518]/30 rounded ring-1 ring-[#f5c518]" />
+          <span>Last Watched</span>
         </div>
       </div>
 
