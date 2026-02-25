@@ -256,7 +256,7 @@ function ProfileContent() {
                         </div>
                       </Link>
                       <div className="flex-1 min-w-0">
-                        <Link href={`/anime/${anime.anime_id}`} className="text-white font-medium hover:text-[#f5c518] transition-colors line-clamp-1">
+                        <Link href={`/anime/${anime.anime_id}`} className="text-white font-bold hover:text-[#f5c518] transition-colors line-clamp-1">
                           {anime.anime_title}
                         </Link>
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -264,7 +264,7 @@ function ProfileContent() {
                             <Link
                               key={ep.id}
                               href={buildWatchUrl(ep.episode_id)}
-                              className="px-2.5 py-1 bg-[#0f1729] hover:bg-[#f5c518] hover:text-black text-gray-300 text-xs rounded transition-colors"
+                              className="px-2.5 py-1 bg-[#0f1729] hover:bg-[#f5c518] hover:text-black text-gray-300 text-xs font-bold rounded transition-colors"
                             >
                               EP {ep.episode_number}
                             </Link>
@@ -275,7 +275,7 @@ function ProfileContent() {
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 text-xs mt-2">
+                        <p className="text-[#f5c518] text-xs font-semibold mt-2">
                           Last watched: {new Date(episodes[0].watched_at).toLocaleDateString()}
                         </p>
                       </div>
