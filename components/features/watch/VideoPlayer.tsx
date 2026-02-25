@@ -46,6 +46,9 @@ interface VideoPlayerContextValue {
   useEmbed: boolean;
   setUseEmbed: Dispatch<SetStateAction<boolean>>;
   getEmbedUrl: () => string;
+  megacloudEmbedUrl: string | null;
+  embedError: string | null;
+  isEmbedServer: boolean;
   captionBackground: string;
   captionFontScale: number;
   introRange: SegmentRange | null;
@@ -135,6 +138,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const [streamingData, setStreamingData] = useState<StreamingData | null>(null);
   const [currentQuality, setCurrentQuality] = useState<string>("auto");
   const [useEmbed, setUseEmbed] = useState(false);
+  const [megacloudEmbedUrl, setMegacloudEmbedUrl] = useState<string | null>(null);
+  const [embedError, setEmbedError] = useState<string | null>(null);
   const [selectedSubtitle, setSelectedSubtitle] = useState<number | "off">("off");
   const [hlsQualityLabels, setHlsQualityLabels] = useState<string[]>([]);
   const currentQualityRef = useRef(currentQuality);
@@ -144,6 +149,9 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const [showOutroPrompt, setShowOutroPrompt] = useState(false);
   const [showFailoverPopup, setShowFailoverPopup] = useState(false);
   const [failoverCountdown, setFailoverCountdown] = useState(3);
+
+  // HD-1 uses Megacloud embed player, HD-2 uses native player
+  const isEmbedServer = server.toLowerCase() === 'hd-1';
 
   const subtitleTracks = useMemo(
     () => streamingData?.tracks?.filter((track) => track.lang.toLowerCase() !== "thumbnails") || [],
@@ -259,6 +267,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     const fetchSources = async () => {
       setIsLoading(true);
       setError(null);
+      setMegacloudEmbedUrl(null);
+      setEmbedError(null);
 
       if (!episodeId || !episodeId.includes("?ep=")) {
         console.error("Invalid episodeId format:", episodeId);
@@ -267,6 +277,34 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
         return;
       }
 
+      // For HD-1 (Megacloud), use embed player approach
+      if (isEmbedServer) {
+        try {
+          console.log('[Embed] Fetching Megacloud embed URL for HD-1...');
+          const embedResponse = await fetch(
+            `/api/watch/embed?episodeId=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`
+          );
+          const embedResult = await embedResponse.json();
+
+          if (embedResponse.ok && embedResult.embedUrl) {
+            console.log('[Embed] Got embed URL:', embedResult.embedUrl);
+            setMegacloudEmbedUrl(embedResult.embedUrl);
+            setIsLoading(false);
+            return;
+          } else {
+            console.warn('[Embed] Failed to get embed URL:', embedResult.error);
+            setEmbedError(embedResult.error || 'Failed to get embed URL');
+          }
+        } catch (err) {
+          console.error('[Embed] Error fetching embed URL:', err);
+          setEmbedError(err instanceof Error ? err.message : 'Failed to fetch embed URL');
+        }
+
+        // Embed failed, try native sources as fallback
+        console.log('[Embed] Falling back to native sources...');
+      }
+
+      // For HD-2 or as fallback: use native HLS player
       try {
         const response = await fetch(
           `/api/watch/sources?episodeId=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`
@@ -688,6 +726,9 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     useEmbed,
     setUseEmbed,
     getEmbedUrl,
+    megacloudEmbedUrl,
+    embedError,
+    isEmbedServer,
     captionBackground,
     captionFontScale,
     introRange,
@@ -737,6 +778,9 @@ export function VideoSurface() {
     useEmbed,
     setUseEmbed,
     getEmbedUrl,
+    megacloudEmbedUrl,
+    embedError,
+    isEmbedServer,
     captionBackground,
     captionFontScale,
     introRange,
@@ -748,6 +792,78 @@ export function VideoSurface() {
     failoverCountdown,
   } = useVideoPlayerContext();
 
+  // Megacloud embed player (for HD-1)
+  if (isEmbedServer && megacloudEmbedUrl) {
+    return (
+      <div className="relative w-full bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
+        <iframe
+          src={megacloudEmbedUrl}
+          className="w-full h-full border-0"
+          allowFullScreen
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          referrerPolicy="origin"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+        />
+        {/* Embed server badge */}
+        <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
+          <span className="px-2 py-1 bg-[#f5c518]/90 text-black text-xs font-bold rounded">
+            MEGACLOUD
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Embed loading state (for HD-1 while fetching embed URL)
+  if (isEmbedServer && isLoading) {
+    return (
+      <div className="relative w-full bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0f1729]">
+          <div className="w-12 h-12 border-4 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm mt-3">Loading Megacloud player...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Embed error state (for HD-1 when embed URL failed and native also failed)
+  if (isEmbedServer && embedError && error) {
+    return (
+      <div className="relative w-full bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0f1729]">
+          <div className="flex flex-col items-center gap-4 text-center px-4">
+            <svg className="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-white font-medium">HD-1 Server Unavailable</p>
+            <p className="text-gray-400 text-sm">Megacloud embed and native player both failed.</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <a
+                href={`?server=hd-2&category=${encodeURIComponent('sub')}`}
+                className="px-4 py-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-medium rounded-lg transition-colors text-center"
+              >
+                Switch to HD-2
+              </a>
+              <button
+                onClick={() => setUseEmbed(true)}
+                className="px-4 py-2 bg-[#1a2332] hover:bg-[#232d3f] text-white font-medium rounded-lg transition-colors"
+              >
+                Try External Player
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-[#1a2332] hover:bg-[#232d3f] text-white font-medium rounded-lg transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback external embed player (2anime.xyz)
   if (useEmbed) {
     return (
       <div className="relative w-full bg-black aspect-video rounded-lg overflow-hidden">
