@@ -74,8 +74,10 @@ const useVideoPlayerContext = () => {
   return context;
 };
 
-// Use Vercel's own API routes for proxying (no external dependency)
-const STREAM_PROXY_BASE = "/api/proxy";
+// Proxy Configuration
+// HD-1 (Megacloud) uses embed player by default to avoid 403 errors
+// HD-2 and other servers still use proxy for native playback
+const STREAM_PROXY_BASE = "/api/proxy"; // or use Railway: "https://pretty-hope-production.up.railway.app"
 
 const hexToRgba = (hex: string, opacity: number) => {
   const sanitized = hex.replace("#", "");
@@ -129,7 +131,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const [error, setError] = useState<string | null>(null);
   const [streamingData, setStreamingData] = useState<StreamingData | null>(null);
   const [currentQuality, setCurrentQuality] = useState<string>("auto");
-  const [useEmbed, setUseEmbed] = useState(false);
+  // Auto-use embed for HD-1 server (Megacloud) to avoid 403 errors
+  const [useEmbed, setUseEmbed] = useState(server.toLowerCase().includes('hd-1'));
   const [selectedSubtitle, setSelectedSubtitle] = useState<number | "off">("off");
   const [hlsQualityLabels, setHlsQualityLabels] = useState<string[]>([]);
   const currentQualityRef = useRef(currentQuality);
@@ -215,7 +218,16 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     const animeId = episodeId.split("?")[0];
     const epMatch = episodeId.match(/ep=(\d+)/);
     const epNum = epMatch ? epMatch[1] : "1";
-    return `https://2anime.xyz/embed/${animeId}-episode-${epNum}`;
+    
+    // Build URL with server and category parameters
+    const params = new URLSearchParams({
+      ep: epNum,
+      server: server,
+      category: category,
+    });
+    
+    // Use HiAnime embed URL with parameters
+    return `https://2anime.xyz/embed/${animeId}?${params.toString()}`;
   };
 
   useEffect(() => {
@@ -253,7 +265,16 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
         }
       } catch (err) {
         console.error("Error fetching sources:", err);
-        setError(err instanceof Error ? err.message : "Failed to load video");
+        const errorMessage = err instanceof Error ? err.message : "Failed to load video";
+        
+        // Auto-fallback to embed player if proxy fails
+        if (errorMessage.includes("403") || errorMessage.includes("Failed to fetch")) {
+          console.log("Proxy failed, switching to embed player");
+          setUseEmbed(true);
+          setError(null); // Clear error when switching to embed
+        } else {
+          setError(errorMessage);
+        }
       } finally {
         setIsLoading(false);
         setIsSwitchingQuality(false);
@@ -701,15 +722,21 @@ export function VideoSurface() {
           src={getEmbedUrl()}
           className="w-full h-full"
           allowFullScreen
-          allow="autoplay; fullscreen; picture-in-picture"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
           frameBorder="0"
+          referrerPolicy="origin"
         />
-        <button
-          onClick={() => setUseEmbed(false)}
-          className="absolute top-2 right-2 px-3 py-1 bg-[#1a2332]/80 hover:bg-[#232d3f] text-white text-xs rounded transition-colors"
-        >
-          Try Native Player
-        </button>
+        <div className="absolute top-2 right-2 flex gap-2">
+          <span className="px-3 py-1 bg-[#f5c518]/90 text-black text-xs rounded font-medium">
+            Embed Player
+          </span>
+          <button
+            onClick={() => setUseEmbed(false)}
+            className="px-3 py-1 bg-[#1a2332]/80 hover:bg-[#232d3f] text-white text-xs rounded transition-colors"
+          >
+            Try Native Player
+          </button>
+        </div>
       </div>
     );
   }
@@ -738,7 +765,7 @@ export function VideoSurface() {
                 onClick={() => setUseEmbed(true)}
                 className="px-4 py-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-medium rounded-lg transition-colors"
               >
-                Use External Player
+                Use Embed Player
               </button>
               <button
                 onClick={() => window.location.reload()}
