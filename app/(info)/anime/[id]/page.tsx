@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar, Footer } from "@/components/layout";
 import { hianimeService } from "@/lib/api/services";
-import { EpisodeList, AnimeTrailer, RecommendationSection, ContinueWatchButton } from "@/components/features/anime";
+import { EpisodeList, AnimeTrailer, RecommendationSection, ContinueWatchButton, FavoriteButton } from "@/components/features/anime";
 import type { HiAnimeEpisode, HiAnimeCard } from "@/types/api/hianime";
 
 // Interface for anime data from HiAnime API
@@ -186,12 +186,13 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                     Watch Now
                   </span>
                 )}
-                <button className="w-full flex items-center justify-center gap-2 bg-[#1a2332] hover:bg-[#232d3f] text-white font-semibold py-3 rounded-lg transition-colors border border-gray-700">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add to Watchlist
-                </button>
+                <FavoriteButton
+                  animeId={id}
+                  animeTitle={anime.info.name}
+                  animePoster={anime.info.poster}
+                  animeType={anime.info.stats?.type}
+                  animeRating={anime.info.stats?.rating}
+                />
               </div>
 
               {/* Information */}

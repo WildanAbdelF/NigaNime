@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, FormEvent } from "react";
+import { useUser } from "@/lib/hooks/useUser";
 
 interface Suggestion {
   id: string;
@@ -25,15 +26,18 @@ const navLinks = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, loading: userLoading, signOut } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const mobileSuggestionsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if a link is active
@@ -112,6 +116,14 @@ export default function Navbar() {
         !mobileInputRef.current.contains(target)
       ) {
         setShowSuggestions(false);
+      }
+
+      // User menu
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(target)
+      ) {
+        setShowUserMenu(false);
       }
     };
 
@@ -269,22 +281,89 @@ export default function Navbar() {
             )}
           </form>
 
-          {/* Profile Avatar */}
-          <button className="w-10 h-10 rounded-full bg-[#1a2332] border border-[#2a3441] flex items-center justify-center hover:border-[#f5c518] transition-colors">
-            <svg
-              className="w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </button>
+          {/* User Menu */}
+          <div className="relative" ref={userMenuRef}>
+            {userLoading ? (
+              <div className="w-10 h-10 rounded-full bg-[#1a2332] border border-[#2a3441] animate-pulse" />
+            ) : user ? (
+              <>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="w-10 h-10 rounded-full bg-[#f5c518] border-2 border-[#f5c518] flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
+                >
+                  {user.user_metadata?.avatar_url ? (
+                    <Image
+                      src={user.user_metadata.avatar_url}
+                      alt="Avatar"
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-black font-bold text-sm">
+                      {(user.user_metadata?.name || user.email || "U").charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-[#1a2332] border border-[#2a3441] rounded-lg shadow-xl z-[100] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-[#2a3441]">
+                      <p className="text-white text-sm font-medium truncate">
+                        {user.user_metadata?.name || user.email?.split("@")[0]}
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">{user.email}</p>
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-[#232d3f] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        My Favorites
+                      </Link>
+                      <Link
+                        href="/profile?tab=history"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-[#232d3f] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Watch History
+                      </Link>
+                    </div>
+                    <div className="border-t border-[#2a3441] py-1">
+                      <button
+                        onClick={() => { setShowUserMenu(false); signOut(); }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-red-400 hover:text-red-300 hover:bg-[#232d3f] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 

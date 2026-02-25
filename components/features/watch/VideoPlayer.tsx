@@ -11,6 +11,8 @@ interface VideoPlayerProps {
   server: string;
   category: string;
   episodeNumber?: number;
+  animeTitle?: string;
+  animePoster?: string;
   children?: ReactNode;
 }
 
@@ -119,7 +121,7 @@ const getQualitySortValue = (quality: string) => {
   return -1;
 };
 
-export default function VideoPlayer({ episodeId, server, category, episodeNumber, children }: VideoPlayerProps) {
+export default function VideoPlayer({ episodeId, server, category, episodeNumber, animeTitle, animePoster, children }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const subtitleTrackRefs = useRef<HTMLTrackElement[]>([]);
@@ -215,7 +217,20 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
       episodeNumber: episodeNumber ?? 0,
       visitedAt: Date.now(),
     });
-  }, [episodeId, episodeNumber]);
+
+    // Sync to Supabase watch history (fire and forget)
+    fetch("/api/user/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        anime_id: animeId,
+        anime_title: animeTitle || "Unknown",
+        anime_poster: animePoster || null,
+        episode_id: episodeId,
+        episode_number: episodeNumber ?? 1,
+      }),
+    }).catch(() => {}); // silently fail if not logged in
+  }, [episodeId, episodeNumber, animeTitle, animePoster]);
 
   const getEmbedUrl = () => {
     const animeId = episodeId.split("?")[0];
