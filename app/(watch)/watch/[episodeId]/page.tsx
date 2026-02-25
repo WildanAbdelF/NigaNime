@@ -157,7 +157,7 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
               </div>
 
               {/* Video Player & Controls */}
-              <VideoPlayer episodeId={decodedEpisodeId} server={server} category={category}>
+              <VideoPlayer episodeId={decodedEpisodeId} server={server} category={category} episodeNumber={episodeNumber}>
                 <div className="space-y-4">
                   <div className="rounded-lg overflow-hidden w-full max-w-[1100px]">
                     <VideoSurface />

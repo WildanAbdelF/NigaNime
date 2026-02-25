@@ -10,6 +10,7 @@ interface VideoPlayerProps {
   episodeId: string;
   server: string;
   category: string;
+  episodeNumber?: number;
   children?: ReactNode;
 }
 
@@ -118,7 +119,7 @@ const getQualitySortValue = (quality: string) => {
   return -1;
 };
 
-export default function VideoPlayer({ episodeId, server, category, children }: VideoPlayerProps) {
+export default function VideoPlayer({ episodeId, server, category, episodeNumber, children }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const subtitleTrackRefs = useRef<HTMLTrackElement[]>([]);
@@ -208,15 +209,13 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
 
   useEffect(() => {
     const animeId = episodeId.split("?")[0];
-    const epMatch = episodeId.match(/ep=(\d+)/);
-    const episodeNumber = epMatch ? Number(epMatch[1]) : 0;
 
     markEpisodeVisited(animeId, {
       episodeId,
-      episodeNumber,
+      episodeNumber: episodeNumber ?? 0,
       visitedAt: Date.now(),
     });
-  }, [episodeId]);
+  }, [episodeId, episodeNumber]);
 
   const getEmbedUrl = () => {
     const animeId = episodeId.split("?")[0];
@@ -489,8 +488,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     if (!video) return;
 
     const animeId = episodeId.split("?")[0];
-    const epMatch = episodeId.match(/ep=(\d+)/);
-    const episodeNumber = epMatch ? Number(epMatch[1]) : 0;
+    const epNum = episodeNumber ?? 0;
 
     const markWatched = () => {
       if (watchedMarkedRef.current) return;
@@ -501,7 +499,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
         watchedMarkedRef.current = true;
         markEpisodeWatched(animeId, {
           episodeId,
-          episodeNumber,
+          episodeNumber: epNum,
           watchedAt: Date.now(),
         });
       }
@@ -512,7 +510,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       watchedMarkedRef.current = true;
       markEpisodeWatched(animeId, {
         episodeId,
-        episodeNumber,
+        episodeNumber: epNum,
         watchedAt: Date.now(),
       });
     };
