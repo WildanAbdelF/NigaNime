@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { HiAnimeEpisode } from "@/types/api/hianime";
 import { buildWatchUrl } from "@/lib/utils/watchUrl";
 import { getLastVisitedEpisode, getVisitedEpisodeIds } from "@/lib/utils/watchedHistory";
+import { useUser } from "@/lib/hooks/useUser";
 
 interface EpisodeListProps {
   episodes: HiAnimeEpisode[];
@@ -13,34 +14,68 @@ interface EpisodeListProps {
 }
 
 export default function EpisodeList({ episodes, animeId }: EpisodeListProps) {
+  const { user } = useUser();
   const [selectedEpisode, setSelectedEpisode] = useState<HiAnimeEpisode | null>(null);
   const [visitedIds, setVisitedIds] = useState<Set<string>>(new Set());
   const [lastVisitedId, setLastVisitedId] = useState<string | null>(null);
 
   // On mount: pick last visited episode or fall back to first
   useEffect(() => {
-    const visited = getVisitedEpisodeIds(animeId);
-    setVisitedIds(visited);
+    let cancelled = false;
 
-    const last = getLastVisitedEpisode(animeId);
-    if (last) {
-      setLastVisitedId(last.episodeId);
-      const found = episodes.find((ep) => ep.episodeId === last.episodeId);
-      if (found) {
-        setSelectedEpisode(found);
-        // Jump to the correct page
-        const idx = episodes.indexOf(found);
-        if (idx >= 0) {
-          setCurrentPage(Math.floor(idx / episodesPerPage) + 1);
-        }
-        return;
+    const resolve = async () => {
+      let resolvedVisitedIds = getVisitedEpisodeIds(animeId);
+      let lastEpisodeId: string | null = null;
+
+      // Try Supabase history if logged in
+      if (user) {
+        try {
+          const res = await fetch(`/api/user/history?anime_id=${encodeURIComponent(animeId)}&limit=300`);
+          if (res.ok) {
+            const json = await res.json();
+            const items: { episode_id: string }[] = json.data || [];
+            if (items.length > 0) {
+              // Merge Supabase episode IDs into visited set
+              const supabaseIds = new Set(items.map((i) => i.episode_id));
+              resolvedVisitedIds = new Set([...resolvedVisitedIds, ...supabaseIds]);
+              lastEpisodeId = items[0].episode_id; // already sorted by watched_at desc
+            }
+          }
+        } catch { /* fall through */ }
       }
-    }
-    // fallback to first episode
-    if (episodes.length > 0) {
-      setSelectedEpisode(episodes[0]);
-    }
-  }, [animeId, episodes]);
+
+      // Fallback: localStorage last visited
+      if (!lastEpisodeId) {
+        const local = getLastVisitedEpisode(animeId);
+        if (local) lastEpisodeId = local.episodeId;
+      }
+
+      if (cancelled) return;
+
+      setVisitedIds(resolvedVisitedIds);
+
+      if (lastEpisodeId) {
+        setLastVisitedId(lastEpisodeId);
+        const found = episodes.find((ep) => ep.episodeId === lastEpisodeId);
+        if (found) {
+          setSelectedEpisode(found);
+          const idx = episodes.indexOf(found);
+          if (idx >= 0) {
+            setCurrentPage(Math.floor(idx / episodesPerPage) + 1);
+          }
+          return;
+        }
+      }
+
+      // fallback to first episode
+      if (episodes.length > 0) {
+        setSelectedEpisode(episodes[0]);
+      }
+    };
+
+    resolve();
+    return () => { cancelled = true; };
+  }, [animeId, episodes, user]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const episodesPerPage = 24;
