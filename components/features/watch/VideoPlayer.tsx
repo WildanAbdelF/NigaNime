@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import type { ReactNode, Dispatch, SetStateAction, RefObject } from "react";
+import { useRouter } from "next/navigation";
 import Hls from "hls.js";
 import { markEpisodeWatched, markEpisodeVisited } from "@/lib/utils/watchedHistory";
+import { buildWatchUrl } from "@/lib/utils/watchUrl";
 
 interface VideoPlayerProps {
   episodeId: string;
@@ -62,6 +64,8 @@ interface VideoPlayerContextValue {
   subtitleTracks: Track[];
   selectedSubtitle: number | "off";
   handleSubtitleChange: (index: number | "off") => void;
+  showFailoverPopup: boolean;
+  failoverCountdown: number;
 }
 
 const VideoPlayerContext = createContext<VideoPlayerContextValue | null>(null);
@@ -74,10 +78,8 @@ const useVideoPlayerContext = () => {
   return context;
 };
 
-// Proxy Configuration
-// HD-1 (Megacloud) uses embed player by default to avoid 403 errors
-// HD-2 and other servers still use proxy for native playback
-const STREAM_PROXY_BASE = "/api/proxy"; // or use Railway: "https://pretty-hope-production.up.railway.app"
+// Use Vercel's own API routes for proxying (no external dependency)
+const STREAM_PROXY_BASE = "/api/proxy";
 
 const hexToRgba = (hex: string, opacity: number) => {
   const sanitized = hex.replace("#", "");
@@ -118,6 +120,7 @@ const getQualitySortValue = (quality: string) => {
 };
 
 export default function VideoPlayer({ episodeId, server, category, children }: VideoPlayerProps) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const subtitleTrackRefs = useRef<HTMLTrackElement[]>([]);
@@ -125,14 +128,15 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const outroSkippedRef = useRef(false);
   const hlsQualityMapRef = useRef<Record<string, number>>({});
   const watchedMarkedRef = useRef(false);
+  const failoverAttemptedRef = useRef(false);
+  const failoverIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingQuality, setIsSwitchingQuality] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamingData, setStreamingData] = useState<StreamingData | null>(null);
   const [currentQuality, setCurrentQuality] = useState<string>("auto");
-  // Auto-use embed for HD-1 server (Megacloud) to avoid 403 errors
-  const [useEmbed, setUseEmbed] = useState(server.toLowerCase().includes('hd-1'));
+  const [useEmbed, setUseEmbed] = useState(false);
   const [selectedSubtitle, setSelectedSubtitle] = useState<number | "off">("off");
   const [hlsQualityLabels, setHlsQualityLabels] = useState<string[]>([]);
   const currentQualityRef = useRef(currentQuality);
@@ -140,6 +144,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
   const [autoSkipOutro, setAutoSkipOutro] = useState(false);
   const [showIntroPrompt, setShowIntroPrompt] = useState(false);
   const [showOutroPrompt, setShowOutroPrompt] = useState(false);
+  const [showFailoverPopup, setShowFailoverPopup] = useState(false);
+  const [failoverCountdown, setFailoverCountdown] = useState(3);
 
   const subtitleTracks = useMemo(
     () => streamingData?.tracks?.filter((track) => track.lang.toLowerCase() !== "thumbnails") || [],
@@ -218,16 +224,7 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     const animeId = episodeId.split("?")[0];
     const epMatch = episodeId.match(/ep=(\d+)/);
     const epNum = epMatch ? epMatch[1] : "1";
-    
-    // Build URL with server and category parameters
-    const params = new URLSearchParams({
-      ep: epNum,
-      server: server,
-      category: category,
-    });
-    
-    // Use HiAnime embed URL with parameters
-    return `https://2anime.xyz/embed/${animeId}?${params.toString()}`;
+    return `https://2anime.xyz/embed/${animeId}-episode-${epNum}`;
   };
 
   useEffect(() => {
@@ -266,14 +263,36 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       } catch (err) {
         console.error("Error fetching sources:", err);
         const errorMessage = err instanceof Error ? err.message : "Failed to load video";
+        setError(errorMessage);
         
-        // Auto-fallback to embed player if proxy fails
-        if (errorMessage.includes("403") || errorMessage.includes("Failed to fetch")) {
-          console.log("Proxy failed, switching to embed player");
-          setUseEmbed(true);
-          setError(null); // Clear error when switching to embed
-        } else {
-          setError(errorMessage);
+        // Auto-failover to HD-2 if current server fails and failover not yet attempted
+        if (!failoverAttemptedRef.current && server.toLowerCase() !== "hd-2") {
+          failoverAttemptedRef.current = true;
+          console.log(`Server ${server} failed, initiating failover to HD-2...`);
+          setShowFailoverPopup(true);
+          
+          // Countdown and redirect
+          let countdown = 3;
+          setFailoverCountdown(countdown);
+          
+          // Clear any existing interval
+          if (failoverIntervalRef.current) {
+            clearInterval(failoverIntervalRef.current);
+          }
+          
+          failoverIntervalRef.current = setInterval(() => {
+            countdown -= 1;
+            setFailoverCountdown(countdown);
+            
+            if (countdown <= 0) {
+              if (failoverIntervalRef.current) {
+                clearInterval(failoverIntervalRef.current);
+                failoverIntervalRef.current = null;
+              }
+              const hd2Url = buildWatchUrl(episodeId, { server: "hd-2", category });
+              router.push(hd2Url);
+            }
+          }, 1000);
         }
       } finally {
         setIsLoading(false);
@@ -387,17 +406,58 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
 
       const handleLevelSwitched = () => setIsSwitchingQuality(false);
 
+      const hlsErrorRetryCount = { network: 0, media: 0 };
+
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
+              console.error('HLS Network Error:', data);
+              hlsErrorRetryCount.network += 1;
+              
+              // If network errors persist (403, etc), trigger failover
+              if (hlsErrorRetryCount.network >= 3 && !failoverAttemptedRef.current && server.toLowerCase() !== 'hd-2') {
+                failoverAttemptedRef.current = true;
+                console.log('Persistent network errors detected, triggering failover to HD-2...');
+                setError('Connection failed: Server unreachable');
+                setShowFailoverPopup(true);
+                
+                let countdown = 3;
+                setFailoverCountdown(countdown);
+                
+                // Clear any existing interval
+                if (failoverIntervalRef.current) {
+                  clearInterval(failoverIntervalRef.current);
+                }
+                
+                failoverIntervalRef.current = setInterval(() => {
+                  countdown -= 1;
+                  setFailoverCountdown(countdown);
+                  
+                  if (countdown <= 0) {
+                    if (failoverIntervalRef.current) {
+                      clearInterval(failoverIntervalRef.current);
+                      failoverIntervalRef.current = null;
+                    }
+                    const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
+                    window.location.href = hd2Url;
+                  }
+                }, 1000);
+              } else {
+                hls.startLoad();
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
+              console.error('HLS Media Error:', data);
+              hlsErrorRetryCount.media += 1;
+              if (hlsErrorRetryCount.media < 3) {
+                hls.recoverMediaError();
+              } else {
+                setError('Media error: Unable to play video');
+              }
               break;
             default:
-              setError("Video playback error");
+              setError('Video playback error');
               break;
           }
         }
@@ -442,6 +502,11 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
+      }
+      // Clear failover interval if exists
+      if (failoverIntervalRef.current) {
+        clearInterval(failoverIntervalRef.current);
+        failoverIntervalRef.current = null;
       }
     };
   }, [selectedSource]);
@@ -676,6 +741,8 @@ export default function VideoPlayer({ episodeId, server, category, children }: V
     subtitleTracks,
     selectedSubtitle,
     handleSubtitleChange,
+    showFailoverPopup,
+    failoverCountdown,
   };
 
   return (
@@ -713,6 +780,8 @@ export function VideoSurface() {
     showIntroPrompt,
     showOutroPrompt,
     handleSkip,
+    showFailoverPopup,
+    failoverCountdown,
   } = useVideoPlayerContext();
 
   if (useEmbed) {
@@ -722,27 +791,54 @@ export function VideoSurface() {
           src={getEmbedUrl()}
           className="w-full h-full"
           allowFullScreen
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          allow="autoplay; fullscreen; picture-in-picture"
           frameBorder="0"
-          referrerPolicy="origin"
         />
-        <div className="absolute top-2 right-2 flex gap-2">
-          <span className="px-3 py-1 bg-[#f5c518]/90 text-black text-xs rounded font-medium">
-            Embed Player
-          </span>
-          <button
-            onClick={() => setUseEmbed(false)}
-            className="px-3 py-1 bg-[#1a2332]/80 hover:bg-[#232d3f] text-white text-xs rounded transition-colors"
-          >
-            Try Native Player
-          </button>
-        </div>
+        <button
+          onClick={() => setUseEmbed(false)}
+          className="absolute top-2 right-2 px-3 py-1 bg-[#1a2332]/80 hover:bg-[#232d3f] text-white text-xs rounded transition-colors"
+        >
+          Try Native Player
+        </button>
       </div>
     );
   }
 
   return (
     <div className="relative bg-black aspect-video rounded-2xl overflow-hidden shadow-2xl">
+      {/* Failover Popup */}
+      {showFailoverPopup && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-[#1a2332] border-2 border-[#f5c518] rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+            <div className="flex flex-col items-center gap-4 text-center">
+              {/* Alert Icon */}
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              
+              {/* Title */}
+              <h3 className="text-xl font-bold text-white">Server Error Detected</h3>
+              
+              {/* Message */}
+              <p className="text-gray-300 text-sm">
+                The current server is experiencing issues. Automatically switching to HD-2 server for better playback...
+              </p>
+              
+              {/* Countdown */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 border-4 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
+                <span className="text-3xl font-bold text-[#f5c518]">{failoverCountdown}</span>
+              </div>
+              
+              <p className="text-gray-400 text-xs">
+                Redirecting in {failoverCountdown} second{failoverCountdown !== 1 ? 's' : ''}...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {(isLoading || isSwitchingQuality) && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0f1729]">
           <div className="w-12 h-12 border-4 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
@@ -765,7 +861,7 @@ export function VideoSurface() {
                 onClick={() => setUseEmbed(true)}
                 className="px-4 py-2 bg-[#f5c518] hover:bg-[#d4a817] text-black font-medium rounded-lg transition-colors"
               >
-                Use Embed Player
+                Use External Player
               </button>
               <button
                 onClick={() => window.location.reload()}
