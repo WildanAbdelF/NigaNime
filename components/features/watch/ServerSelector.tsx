@@ -94,20 +94,36 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
 
         {/* Server Buttons */}
         <div className="flex flex-wrap gap-2">
-          {(servers[currentCategory as keyof ServersData] || []).map((server) => (
-            <a
-              key={`${currentCategory}-${server.serverId}-${server.serverName}`}
-              href={buildWatchUrl(episodeId, { server: server.serverName, category: currentCategory })}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-center ${
-                currentServer === server.serverName
-                  ? "bg-[#f5c518] text-black"
-                  : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
-              }`}
-              style={{ minWidth: "96px" }}
-            >
-              {server.serverName.toUpperCase()}
-            </a>
-          ))}
+          {(servers[currentCategory as keyof ServersData] || [])
+            .sort((a, b) => {
+              // Put HD-2 first since HD-1 (Megacloud) is often blocked
+              if (a.serverName.toLowerCase() === 'hd-2') return -1;
+              if (b.serverName.toLowerCase() === 'hd-2') return 1;
+              return 0;
+            })
+            .map((server) => {
+              const isUnstable = server.serverName.toLowerCase() === 'hd-1';
+              return (
+                <a
+                  key={`${currentCategory}-${server.serverId}-${server.serverName}`}
+                  href={buildWatchUrl(episodeId, { server: server.serverName, category: currentCategory })}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-center relative ${
+                    currentServer === server.serverName
+                      ? "bg-[#f5c518] text-black"
+                      : isUnstable
+                        ? "bg-[#0f1729] text-gray-500 hover:bg-[#232d3f] hover:text-gray-300"
+                        : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
+                  }`}
+                  style={{ minWidth: "96px" }}
+                  title={isUnstable ? "This server may be unstable" : undefined}
+                >
+                  {server.serverName.toUpperCase()}
+                  {isUnstable && (
+                    <span className="ml-1 text-[10px] text-yellow-500">⚠</span>
+                  )}
+                </a>
+              );
+            })}
         </div>
       </div>
     </div>

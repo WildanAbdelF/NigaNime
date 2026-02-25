@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: WatchPageProps): Promise<Meta
 
 export default async function WatchPage({ params, searchParams }: WatchPageProps) {
   const { episodeId } = await params;
-  const { server = "hd-1", category = "sub", ep } = await searchParams;
+  const { server = "hd-2", category = "sub", ep } = await searchParams;
   
   // Decode the episode ID
   let decodedEpisodeId = decodeURIComponent(episodeId);
