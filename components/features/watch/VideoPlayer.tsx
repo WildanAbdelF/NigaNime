@@ -149,6 +149,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   const positionSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const savedPositionRef = useRef<number>(0);
   const hasResumedRef = useRef(false);
+  const wantToResumeRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingQuality, setIsSwitchingQuality] = useState(false);
@@ -227,6 +228,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     // reset per-episode marker so we only mark watch completion once per load
     watchedMarkedRef.current = false;
     hasResumedRef.current = false;
+    wantToResumeRef.current = false;
     savedPositionRef.current = 0;
     setShowResumePrompt(false);
   }, [episodeId]);
@@ -310,16 +312,35 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   // Handle resume from saved position
   const handleResume = () => {
     const video = videoRef.current;
+    wantToResumeRef.current = true;
+    
+    // Try to seek immediately if video is ready
     if (video && savedPositionRef.current > 0) {
-      video.currentTime = savedPositionRef.current;
-      hasResumedRef.current = true;
+      if (video.readyState >= 1) {
+        // Video has metadata, can seek
+        video.currentTime = savedPositionRef.current;
+        hasResumedRef.current = true;
+      }
+      // If not ready yet, the seek will happen in applyResumePosition after video loads
     }
     setShowResumePrompt(false);
   };
 
   const handleStartOver = () => {
+    wantToResumeRef.current = false;
     hasResumedRef.current = true;
     setShowResumePrompt(false);
+  };
+
+  // Apply resume position when video is ready
+  const applyResumePosition = () => {
+    const video = videoRef.current;
+    if (!video || hasResumedRef.current) return;
+    
+    if (wantToResumeRef.current && savedPositionRef.current > 0) {
+      video.currentTime = savedPositionRef.current;
+      hasResumedRef.current = true;
+    }
   };
 
   useEffect(() => {
@@ -523,6 +544,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
 
         video.play().catch(() => {});
         setIsSwitchingQuality(false);
+        applyResumePosition();
       };
 
       const handleLevelSwitched = () => setIsSwitchingQuality(false);
@@ -561,6 +583,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
         () => {
           video.play().catch(() => {});
           setIsSwitchingQuality(false);
+          applyResumePosition();
         },
         { once: true }
       );
@@ -570,7 +593,10 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
       video.load();
       video.addEventListener(
         "canplay",
-        () => setIsSwitchingQuality(false),
+        () => {
+          setIsSwitchingQuality(false);
+          applyResumePosition();
+        },
         { once: true }
       );
       video.play().catch(() => {});
