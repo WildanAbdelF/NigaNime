@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS public.watch_history (
   anime_poster TEXT,
   episode_id TEXT NOT NULL,
   episode_number INTEGER NOT NULL DEFAULT 1,
+  playback_position REAL DEFAULT 0,      -- Last playback position in seconds
+  duration REAL DEFAULT 0,               -- Total video duration in seconds
   watched_at TIMESTAMPTZ DEFAULT now() NOT NULL,
 
   -- One entry per user per episode (upsert on re-watch)
@@ -78,6 +80,13 @@ CREATE TABLE IF NOT EXISTS public.watch_history (
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_watch_history_user_id ON public.watch_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_watch_history_anime_id ON public.watch_history(user_id, anime_id);
+
+-- ============================================
+-- MIGRATION: Add playback_position column if upgrading existing database
+-- Run this if your database was created before this update:
+-- ============================================
+-- ALTER TABLE public.watch_history ADD COLUMN IF NOT EXISTS playback_position REAL DEFAULT 0;
+-- ALTER TABLE public.watch_history ADD COLUMN IF NOT EXISTS duration REAL DEFAULT 0;
 
 -- ============================================
 -- 4. ROW LEVEL SECURITY (RLS)

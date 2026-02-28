@@ -68,6 +68,10 @@ interface VideoPlayerContextValue {
   handleSubtitleChange: (index: number | "off") => void;
   showFailoverPopup: boolean;
   failoverCountdown: number;
+  showResumePrompt: boolean;
+  savedPosition: number;
+  handleResume: () => void;
+  handleStartOver: () => void;
 }
 
 const VideoPlayerContext = createContext<VideoPlayerContextValue | null>(null);
@@ -93,6 +97,17 @@ const hexToRgba = (hex: string, opacity: number) => {
   const g = (bigint >> 8) & 255;
   const b = bigint & 255;
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+const formatTime = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
 const DEFAULT_CAPTION_COLOR = "#000000";
@@ -131,6 +146,9 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   const watchedMarkedRef = useRef(false);
   const failoverAttemptedRef = useRef(false);
   const failoverIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const positionSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const savedPositionRef = useRef<number>(0);
+  const hasResumedRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSwitchingQuality, setIsSwitchingQuality] = useState(false);
@@ -147,6 +165,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   const [showOutroPrompt, setShowOutroPrompt] = useState(false);
   const [showFailoverPopup, setShowFailoverPopup] = useState(false);
   const [failoverCountdown, setFailoverCountdown] = useState(0);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
 
   const subtitleTracks = useMemo(
     () => streamingData?.tracks?.filter((track) => track.lang.toLowerCase() !== "thumbnails") || [],
@@ -207,7 +226,101 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   useEffect(() => {
     // reset per-episode marker so we only mark watch completion once per load
     watchedMarkedRef.current = false;
+    hasResumedRef.current = false;
+    savedPositionRef.current = 0;
+    setShowResumePrompt(false);
   }, [episodeId]);
+
+  // Fetch saved playback position on mount
+  useEffect(() => {
+    const animeId = episodeId.split("?")[0];
+    
+    const fetchSavedPosition = async () => {
+      try {
+        const response = await fetch(`/api/user/history?anime_id=${encodeURIComponent(animeId)}&episode_id=${encodeURIComponent(episodeId)}`);
+        if (response.ok) {
+          const result = await response.json();
+          const historyEntry = result.data?.[0];
+          if (historyEntry?.playback_position && historyEntry.playback_position > 10) {
+            // Only show resume prompt if more than 10 seconds into the video
+            // and not near the end (less than 90% watched)
+            const duration = historyEntry.duration || 0;
+            const position = historyEntry.playback_position;
+            const progress = duration > 0 ? position / duration : 0;
+            
+            if (progress < 0.9) {
+              savedPositionRef.current = position;
+              setShowResumePrompt(true);
+            }
+          }
+        }
+      } catch {
+        // Silently fail - user may not be logged in
+      }
+    };
+
+    fetchSavedPosition();
+  }, [episodeId]);
+
+  // Save playback position periodically and on unload
+  useEffect(() => {
+    const animeId = episodeId.split("?")[0];
+    
+    const savePosition = () => {
+      const video = videoRef.current;
+      if (!video || !Number.isFinite(video.currentTime) || video.currentTime < 5) return;
+      
+      fetch("/api/user/history", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          anime_id: animeId,
+          episode_id: episodeId,
+          playback_position: video.currentTime,
+          duration: video.duration || 0,
+        }),
+      }).catch(() => {});
+    };
+
+    // Save position every 10 seconds
+    positionSaveIntervalRef.current = setInterval(savePosition, 10000);
+
+    // Save position when leaving page
+    const handleBeforeUnload = () => savePosition();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        savePosition();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      if (positionSaveIntervalRef.current) {
+        clearInterval(positionSaveIntervalRef.current);
+        positionSaveIntervalRef.current = null;
+      }
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      savePosition(); // Save one last time on cleanup
+    };
+  }, [episodeId]);
+
+  // Handle resume from saved position
+  const handleResume = () => {
+    const video = videoRef.current;
+    if (video && savedPositionRef.current > 0) {
+      video.currentTime = savedPositionRef.current;
+      hasResumedRef.current = true;
+    }
+    setShowResumePrompt(false);
+  };
+
+  const handleStartOver = () => {
+    hasResumedRef.current = true;
+    setShowResumePrompt(false);
+  };
 
   useEffect(() => {
     const animeId = episodeId.split("?")[0];
@@ -711,6 +824,10 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     handleSubtitleChange,
     showFailoverPopup,
     failoverCountdown,
+    showResumePrompt,
+    savedPosition: savedPositionRef.current,
+    handleResume,
+    handleStartOver,
   };
 
   return (
@@ -750,6 +867,10 @@ export function VideoSurface() {
     handleSkip,
     showFailoverPopup,
     failoverCountdown,
+    showResumePrompt,
+    savedPosition,
+    handleResume,
+    handleStartOver,
   } = useVideoPlayerContext();
 
   // External embed player fallback
@@ -844,6 +965,36 @@ export function VideoSurface() {
           `}</style>
 
           <div className="player-shell absolute inset-0 pointer-events-none">
+            {/* Resume Prompt */}
+            {showResumePrompt && (
+              <div className="pointer-events-auto absolute inset-0 flex items-center justify-center bg-black/70 z-10">
+                <div className="bg-[#1a2332] rounded-xl p-6 max-w-sm mx-4 text-center shadow-2xl border border-[#2a3441]">
+                  <svg className="w-12 h-12 mx-auto mb-4 text-[#f5c518]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-white text-lg font-semibold mb-2">Continue Watching?</h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Resume from {formatTime(savedPosition)}
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={handleStartOver}
+                      className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-[#0f1729] hover:bg-[#232d3f] rounded-lg transition-colors"
+                    >
+                      Start Over
+                    </button>
+                    <button
+                      onClick={handleResume}
+                      className="px-4 py-2 text-sm font-semibold text-black bg-[#f5c518] hover:bg-[#d4a817] rounded-lg transition-colors"
+                    >
+                      Resume
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {showIntroPrompt && (
               <button
                 onClick={() => handleSkip("intro")}

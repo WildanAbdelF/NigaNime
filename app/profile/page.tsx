@@ -25,6 +25,8 @@ interface WatchHistoryItem {
   anime_poster: string | null;
   episode_id: string;
   episode_number: number;
+  playback_position: number;
+  duration: number;
   watched_at: string;
 }
 
@@ -400,7 +402,14 @@ function ProfileContent() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {Object.values(historyByAnime).map(({ anime, episodes }) => (
+                  {Object.values(historyByAnime).map(({ anime, episodes }) => {
+                    const lastEpisode = episodes[0];
+                    const progress = lastEpisode.duration > 0 
+                      ? Math.min((lastEpisode.playback_position / lastEpisode.duration) * 100, 100) 
+                      : 0;
+                    const canContinue = lastEpisode.playback_position > 10 && progress < 90;
+                    
+                    return (
                     <div key={anime.anime_id} className="bg-gradient-to-r from-[#1a2332] to-[#1a2332]/50 rounded-xl p-4 flex gap-4 group hover:from-[#1a2332] hover:to-[#232d3f]/50 transition-all ring-1 ring-[#2a3441]/50 hover:ring-[#f5c518]/20">
                       <Link href={`/anime/${anime.anime_id}`} className="flex-shrink-0">
                         <div className="relative w-20 h-28 rounded-lg overflow-hidden bg-[#0f1729] ring-1 ring-[#2a3441] group-hover:ring-[#f5c518]/30 transition-all">
@@ -408,6 +417,15 @@ function ProfileContent() {
                             <Image src={anime.anime_poster} alt={anime.anime_title} fill className="object-cover" unoptimized />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">N/A</div>
+                          )}
+                          {/* Progress bar overlay */}
+                          {progress > 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+                              <div 
+                                className="h-full bg-[#f5c518]" 
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
                           )}
                           {/* Play Overlay */}
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -420,22 +438,51 @@ function ProfileContent() {
                         </div>
                       </Link>
                       <div className="flex-1 min-w-0">
-                        <Link href={`/anime/${anime.anime_id}`} className="text-white font-bold hover:text-[#f5c518] transition-colors line-clamp-1 text-lg">
-                          {anime.anime_title}
-                        </Link>
+                        <div className="flex items-start justify-between gap-2">
+                          <Link href={`/anime/${anime.anime_id}`} className="text-white font-bold hover:text-[#f5c518] transition-colors line-clamp-1 text-lg">
+                            {anime.anime_title}
+                          </Link>
+                          {canContinue && (
+                            <Link 
+                              href={buildWatchUrl(lastEpisode.episode_id)}
+                              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#f5c518] hover:bg-[#d4a817] text-black text-xs font-bold rounded-lg transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                              Continue EP {lastEpisode.episode_number}
+                            </Link>
+                          )}
+                        </div>
                         <p className="text-gray-500 text-xs mt-1 mb-3">
                           {episodes.length} episode{episodes.length > 1 ? 's' : ''} watched
+                          {canContinue && lastEpisode.duration > 0 && (
+                            <span className="text-[#f5c518] ml-2">
+                              • {Math.floor(lastEpisode.playback_position / 60)}:{String(Math.floor(lastEpisode.playback_position % 60)).padStart(2, '0')} / {Math.floor(lastEpisode.duration / 60)}:{String(Math.floor(lastEpisode.duration % 60)).padStart(2, '0')}
+                            </span>
+                          )}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {episodes.slice(0, 8).map((ep) => (
+                          {episodes.slice(0, 8).map((ep) => {
+                            const epProgress = ep.duration > 0 ? (ep.playback_position / ep.duration) * 100 : 0;
+                            return (
                             <Link
                               key={ep.id}
                               href={buildWatchUrl(ep.episode_id)}
-                              className="px-2.5 py-1 bg-[#0f1729] hover:bg-[#f5c518] hover:text-black text-gray-300 text-xs font-bold rounded transition-colors"
+                              className="relative px-2.5 py-1 bg-[#0f1729] hover:bg-[#f5c518] hover:text-black text-gray-300 text-xs font-bold rounded transition-colors overflow-hidden"
                             >
+                              {epProgress > 0 && epProgress < 90 && (
+                                <div 
+                                  className="absolute bottom-0 left-0 h-0.5 bg-[#f5c518]" 
+                                  style={{ width: `${epProgress}%` }}
+                                />
+                              )}
+                              {epProgress >= 90 && (
+                                <div className="absolute bottom-0 left-0 h-0.5 w-full bg-green-500" />
+                              )}
                               EP {ep.episode_number}
                             </Link>
-                          ))}
+                          )})}
                           {episodes.length > 8 && (
                             <span className="px-3 py-1.5 text-gray-500 text-xs font-medium">
                               +{episodes.length - 8} more
@@ -452,7 +499,7 @@ function ProfileContent() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )
