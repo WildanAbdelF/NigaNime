@@ -196,9 +196,9 @@ function ProfileContent() {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6 pt-6 border-t border-[#2a3441]/50">
-                  <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-xl p-4 text-center group hover:from-pink-500/20 hover:to-pink-500/10 transition-all cursor-default">
+                  <div className="bg-[#0f1729]/50 rounded-xl p-4 text-center group hover:bg-[#0f1729] transition-all cursor-default">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <svg className="w-5 h-5 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[#f5c518]" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                       </svg>
                       <span className="text-2xl font-bold text-white">{favorites.length}</span>
@@ -206,9 +206,9 @@ function ProfileContent() {
                     <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">Favorites</p>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-xl p-4 text-center group hover:from-blue-500/20 hover:to-blue-500/10 transition-all cursor-default">
+                  <div className="bg-[#0f1729]/50 rounded-xl p-4 text-center group hover:bg-[#0f1729] transition-all cursor-default">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[#f5c518]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
                       </svg>
                       <span className="text-2xl font-bold text-white">{uniqueAnimeWatched}</span>
@@ -216,9 +216,9 @@ function ProfileContent() {
                     <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">Anime Watched</p>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-xl p-4 text-center group hover:from-emerald-500/20 hover:to-emerald-500/10 transition-all cursor-default">
+                  <div className="bg-[#0f1729]/50 rounded-xl p-4 text-center group hover:bg-[#0f1729] transition-all cursor-default">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[#f5c518]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -227,9 +227,9 @@ function ProfileContent() {
                     <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">Episodes</p>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-xl p-4 text-center group hover:from-purple-500/20 hover:to-purple-500/10 transition-all cursor-default">
+                  <div className="bg-[#0f1729]/50 rounded-xl p-4 text-center group hover:bg-[#0f1729] transition-all cursor-default">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[#f5c518]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-2xl font-bold text-white">{Math.round(totalEpisodesWatched * 24 / 60)}h</span>
@@ -242,38 +242,32 @@ function ProfileContent() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 bg-[#1a2332]/50 p-1.5 w-fit">
+          <div className="flex gap-1 mb-6 bg-[#1a2332] rounded-lg p-1 w-fit">
             <button
               onClick={() => setActiveTab("favorites")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "favorites"
-                  ? "bg-gradient-to-r from-[#f5c518] to-[#d4a817] text-black shadow-lg shadow-[#f5c518]/20"
-                  : "text-gray-400 hover:text-white hover:bg-[#232d3f]"
+                  ? "bg-[#f5c518] text-black"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               <svg className="w-4 h-4" fill={activeTab === "favorites" ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={activeTab === "favorites" ? 0 : 2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              Favorites
-              <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === "favorites" ? "bg-black/20" : "bg-[#0f1729]"}`}>
-                {favorites.length}
-              </span>
+              Favorites ({favorites.length})
             </button>
             <button
               onClick={() => setActiveTab("history")}
-              className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "history"
-                  ? "bg-gradient-to-r from-[#f5c518] to-[#d4a817] text-black shadow-lg shadow-[#f5c518]/20"
-                  : "text-gray-400 hover:text-white hover:bg-[#232d3f]"
+                  ? "bg-[#f5c518] text-black"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Watch History
-              <span className={`px-2 py-0.5 rounded-full text-xs ${activeTab === "history" ? "bg-black/20" : "bg-[#0f1729]"}`}>
-                {uniqueAnimeWatched}
-              </span>
+              Watch History ({uniqueAnimeWatched})
             </button>
           </div>
 
@@ -287,11 +281,10 @@ function ProfileContent() {
           ) : activeTab === "favorites" ? (
             /* Favorites Grid */
             favorites.length === 0 ? (
-              <div className="text-center py-20 bg-gradient-to-b from-[#1a2332]/30 to-transparent rounded-2xl">
+              <div className="text-center py-20 bg-[#1a2332]/30 rounded-2xl">
                 <div className="relative inline-block mb-6">
-                  <div className="absolute inset-0 bg-pink-500/20 blur-2xl rounded-full" />
-                  <div className="relative w-24 h-24 bg-gradient-to-br from-pink-500/20 to-pink-500/5 rounded-full flex items-center justify-center">
-                    <svg className="w-12 h-12 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="relative w-20 h-20 bg-[#0f1729] rounded-full flex items-center justify-center border border-[#2a3441]">
+                    <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </div>
@@ -302,9 +295,9 @@ function ProfileContent() {
                 </p>
                 <Link 
                   href="/anime" 
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#f5c518] to-[#d4a817] text-black font-semibold rounded-xl hover:shadow-lg hover:shadow-[#f5c518]/20 transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f5c518] text-black font-semibold rounded-lg hover:bg-[#d4a817] transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   Browse Anime
@@ -333,7 +326,7 @@ function ProfileContent() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         
                         {fav.anime_type && (
-                          <span className="absolute top-2 left-2 bg-gradient-to-r from-[#f5c518] to-[#d4a817] text-black text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg">
+                          <span className="absolute top-2 left-2 bg-[#f5c518] text-black text-xs font-bold px-2 py-0.5 rounded">
                             {fav.anime_type}
                           </span>
                         )}
@@ -368,11 +361,10 @@ function ProfileContent() {
           ) : (
             /* Watch History */
             history.length === 0 ? (
-              <div className="text-center py-20 bg-gradient-to-b from-[#1a2332]/30 to-transparent rounded-2xl">
+              <div className="text-center py-20 bg-[#1a2332]/30 rounded-2xl">
                 <div className="relative inline-block mb-6">
-                  <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
-                  <div className="relative w-24 h-24 bg-gradient-to-br from-blue-500/20 to-blue-500/5 rounded-full flex items-center justify-center">
-                    <svg className="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="relative w-20 h-20 bg-[#0f1729] rounded-full flex items-center justify-center border border-[#2a3441]">
+                    <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -383,9 +375,9 @@ function ProfileContent() {
                 </p>
                 <Link 
                   href="/trending" 
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#f5c518] to-[#d4a817] text-black font-semibold rounded-xl hover:shadow-lg hover:shadow-[#f5c518]/20 transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#f5c518] text-black font-semibold rounded-lg hover:bg-[#d4a817] transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   Explore Trending
@@ -439,7 +431,7 @@ function ProfileContent() {
                             <Link
                               key={ep.id}
                               href={buildWatchUrl(ep.episode_id)}
-                              className="px-3 py-1.5 bg-[#0f1729] hover:bg-gradient-to-r hover:from-[#f5c518] hover:to-[#d4a817] hover:text-black text-gray-300 text-xs font-bold rounded-lg transition-all ring-1 ring-[#2a3441] hover:ring-transparent"
+                              className="px-2.5 py-1 bg-[#0f1729] hover:bg-[#f5c518] hover:text-black text-gray-300 text-xs font-bold rounded transition-colors"
                             >
                               EP {ep.episode_number}
                             </Link>
