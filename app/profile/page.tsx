@@ -242,7 +242,7 @@ function ProfileContent() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 bg-[#1a2332]/50 rounded-xl p-1.5 w-fit">
+          <div className="flex gap-2 mb-6 bg-[#1a2332]/50 p-1.5 w-fit">
             <button
               onClick={() => setActiveTab("favorites")}
               className={`flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-medium transition-all ${
