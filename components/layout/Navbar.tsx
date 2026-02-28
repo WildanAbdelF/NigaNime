@@ -23,6 +23,11 @@ const navLinks = [
   { name: "Genre", href: "/genre" },
 ];
 
+interface UserStats {
+  favoritesCount: number;
+  historyCount: number;
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -33,12 +38,36 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats>({ favoritesCount: 0, historyCount: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const mobileSuggestionsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch user stats when menu opens
+  useEffect(() => {
+    if (showUserMenu && user) {
+      const fetchStats = async () => {
+        try {
+          const [favRes, histRes] = await Promise.all([
+            fetch("/api/user/favorites"),
+            fetch("/api/user/history?limit=100"),
+          ]);
+          const favJson = await favRes.json();
+          const histJson = await histRes.json();
+          setUserStats({
+            favoritesCount: favJson.data?.length || 0,
+            historyCount: histJson.data?.length || 0,
+          });
+        } catch {
+          // ignore
+        }
+      };
+      fetchStats();
+    }
+  }, [showUserMenu, user]);
 
   // Check if a link is active
   const isActiveLink = (href: string) => {
@@ -309,44 +338,128 @@ export default function Navbar() {
 
                 {/* Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-[#1a2332] border border-[#2a3441] rounded-lg shadow-xl z-[100] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-[#2a3441]">
-                      <p className="text-white text-sm font-medium truncate">
-                        {user.user_metadata?.name || user.email?.split("@")[0]}
-                      </p>
-                      <p className="text-gray-500 text-xs truncate">{user.email}</p>
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-gradient-to-b from-[#1a2332] to-[#151d29] border border-[#2a3441] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* User Header with Gradient */}
+                    <div className="relative px-5 py-4 bg-gradient-to-r from-[#f5c518]/20 via-[#f5c518]/10 to-transparent border-b border-[#2a3441]">
+                      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M0%200h4v4H0zm8%200h4v4H8zm8%208h4v4h-4zm-8%200h4v4H8zM0%2016h4v4H0z%22%20fill%3D%22%23f5c518%22%20fill-opacity%3D%22.03%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
+                      <div className="relative flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#f5c518] to-[#d4a817] flex items-center justify-center shadow-lg ring-2 ring-[#f5c518]/30 overflow-hidden">
+                          {user.user_metadata?.avatar_url ? (
+                            <Image
+                              src={user.user_metadata.avatar_url}
+                              alt="Avatar"
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <span className="text-black font-bold text-lg">
+                              {(user.user_metadata?.name || user.email || "U").charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold truncate">
+                            {user.user_metadata?.name || user.email?.split("@")[0]}
+                          </p>
+                          <p className="text-gray-400 text-xs truncate">{user.email}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="py-1">
+
+                    {/* Quick Stats */}
+                    <div className="px-4 py-3 grid grid-cols-2 gap-3 border-b border-[#2a3441]/50">
+                      <div className="bg-[#0f1729]/50 rounded-xl px-3 py-2.5 text-center hover:bg-[#0f1729] transition-colors cursor-pointer group">
+                        <div className="flex items-center justify-center gap-1.5 mb-1">
+                          <svg className="w-4 h-4 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          </svg>
+                          <span className="text-white font-bold text-sm group-hover:text-[#f5c518] transition-colors">{userStats.favoritesCount}</span>
+                        </div>
+                        <span className="text-gray-500 text-[10px] uppercase tracking-wider">Favorites</span>
+                      </div>
+                      <div className="bg-[#0f1729]/50 rounded-xl px-3 py-2.5 text-center hover:bg-[#0f1729] transition-colors cursor-pointer group">
+                        <div className="flex items-center justify-center gap-1.5 mb-1">
+                          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-white font-bold text-sm group-hover:text-[#f5c518] transition-colors">{userStats.historyCount}</span>
+                        </div>
+                        <span className="text-gray-500 text-[10px] uppercase tracking-wider">Watched</span>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2 px-2">
                       <Link
                         href="/profile"
                         onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-[#232d3f] transition-colors"
+                        className="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white rounded-xl hover:bg-gradient-to-r hover:from-[#f5c518]/10 hover:to-transparent transition-all group"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center group-hover:bg-pink-500/20 transition-colors">
+                          <svg className="w-4 h-4 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">My Favorites</span>
+                          <p className="text-[10px] text-gray-500">Anime you love</p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-600 group-hover:text-[#f5c518] group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                        My Favorites
                       </Link>
                       <Link
                         href="/profile?tab=history"
                         onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:text-white hover:bg-[#232d3f] transition-colors"
+                        className="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white rounded-xl hover:bg-gradient-to-r hover:from-[#3b82f6]/10 hover:to-transparent transition-all group"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">Watch History</span>
+                          <p className="text-[10px] text-gray-500">Continue watching</p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-600 group-hover:text-[#f5c518] group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                        Watch History
+                      </Link>
+                      <Link
+                        href="/anime"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white rounded-xl hover:bg-gradient-to-r hover:from-[#10b981]/10 hover:to-transparent transition-all group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                          <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">Browse Anime</span>
+                          <p className="text-[10px] text-gray-500">Discover new shows</p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-600 group-hover:text-[#f5c518] group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </Link>
                     </div>
-                    <div className="border-t border-[#2a3441] py-1">
+
+                    {/* Sign Out */}
+                    <div className="border-t border-[#2a3441]/50 p-2">
                       <button
                         onClick={() => { setShowUserMenu(false); signOut(); }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-red-400 hover:text-red-300 hover:bg-[#232d3f] transition-colors"
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all group"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Sign Out
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                          <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                        </div>
+                        <span className="font-medium">Sign Out</span>
                       </button>
                     </div>
                   </div>
