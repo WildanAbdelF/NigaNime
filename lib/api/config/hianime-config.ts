@@ -6,7 +6,10 @@
  */
 
 export const HIANIME_CONFIG = {
-  BASE_URL: "https://niga-nime-api.vercel.app/api/v2/hianime",
+  BASE_URL:
+    process.env.NEXT_PUBLIC_HIANIME_API_BASE_URL ||
+    process.env.HIANIME_API_BASE_URL ||
+    "https://niga-nime-api.vercel.app/api/v2/hianime",
 } as const;
 
 export const HIANIME_ENDPOINTS = {

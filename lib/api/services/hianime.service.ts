@@ -126,28 +126,28 @@ export const hianimeService = {
    * Get most popular anime
    */
   async getMostPopular(page: number = 1) {
-    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.MOST_POPULAR}?page=${page}`);
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY("most-popular", page));
   },
 
   /**
    * Get most favorite anime
    */
   async getMostFavorite(page: number = 1) {
-    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.MOST_FAVORITE}?page=${page}`);
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY("most-favorite", page));
   },
 
   /**
    * Get top airing anime
    */
   async getTopAiring(page: number = 1) {
-    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.TOP_AIRING}?page=${page}`);
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY("top-airing", page));
   },
 
   /**
    * Get latest episodes
    */
   async getLatestEpisodes(page: number = 1) {
-    return fetchHiAnime<any>(`${HIANIME_ENDPOINTS.LATEST_EPISODES}?page=${page}`);
+    return fetchHiAnime<any>(HIANIME_ENDPOINTS.CATEGORY("recently-updated", page));
   },
 
   /**

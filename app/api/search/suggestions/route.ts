@@ -4,9 +4,10 @@ import { HIANIME_CONFIG, HIANIME_ENDPOINTS } from "@/lib/api/config/hianime-conf
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q");
+  const emptyPayload = { data: { suggestions: [] } };
 
   if (!query || query.length < 2) {
-    return NextResponse.json({ data: { suggestions: [] } });
+    return NextResponse.json(emptyPayload);
   }
 
   try {
@@ -21,16 +22,14 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      console.warn("Suggestions upstream returned non-OK status:", response.status);
+      return NextResponse.json(emptyPayload);
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data ?? emptyPayload);
   } catch (error) {
     console.error("Failed to fetch search suggestions:", error);
-    return NextResponse.json(
-      { data: { suggestions: [] }, error: "Failed to fetch suggestions" },
-      { status: 500 }
-    );
+    return NextResponse.json(emptyPayload);
   }
 }

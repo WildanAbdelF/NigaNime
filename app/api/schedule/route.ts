@@ -4,6 +4,10 @@ import { getScheduleWithArtwork } from "@/lib/schedule";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get("date");
+  const emptyPayload = {
+    success: true,
+    data: { scheduledAnimes: [] as unknown[] },
+  };
 
   if (!date) {
     return NextResponse.json(
@@ -16,10 +20,7 @@ export async function GET(request: NextRequest) {
     const { response, scheduledAnimes } = await getScheduleWithArtwork(date);
 
     if (!response) {
-      return NextResponse.json(
-        { success: false, error: "Failed to fetch schedule" },
-        { status: 500 }
-      );
+      return NextResponse.json(emptyPayload);
     }
 
     return NextResponse.json({
@@ -28,9 +29,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Schedule API error:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch schedule" },
-      { status: 500 }
-    );
+    return NextResponse.json(emptyPayload);
   }
 }
