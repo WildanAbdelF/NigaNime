@@ -30,12 +30,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "hianime.to",
+        hostname: "hianime.at",
         pathname: "/**",
       },
       {
         protocol: "https",
-        hostname: "img.hianime.to",
+        hostname: "img.hianime.at",
         pathname: "/**",
       },
       {
