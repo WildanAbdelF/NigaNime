@@ -50,7 +50,14 @@ export const hianimeService = {
    * Get anime episodes
    */
   async getEpisodes(id: string) {
-    return fetchHiAnime<HiAnimeEpisodesResponse>(HIANIME_ENDPOINTS.EPISODES(id));
+    const res = await fetchHiAnime<HiAnimeEpisodesResponse>(HIANIME_ENDPOINTS.EPISODES(id));
+    if (res?.data?.episodes) {
+      res.data.episodes = res.data.episodes.map((ep: any) => ({
+        ...ep,
+        episodeId: ep.id || ep.episodeId,
+      }));
+    }
+    return res;
   },
 
   /**
@@ -73,7 +80,7 @@ export const hianimeService = {
    * Search anime
    */
   async search(query: string) {
-    return fetchHiAnime<HiAnimeSearchResponse>(`${HIANIME_ENDPOINTS.SEARCH}?q=${encodeURIComponent(query)}`);
+    return fetchHiAnime<HiAnimeSearchResponse>(`${HIANIME_ENDPOINTS.SEARCH}?keyword=${encodeURIComponent(query)}`);
   },
 
   /**
@@ -96,7 +103,7 @@ export const hianimeService = {
     score?: string;   // appalling, horrible, very-bad, bad, average, fine, good, very-good, great, masterpiece
   }) {
     const params = new URLSearchParams();
-    params.set("q", query);
+    params.set("keyword", query);
     if (page > 1) params.set("page", page.toString());
     
     if (filters) {
@@ -213,7 +220,7 @@ export const hianimeService = {
     
     // Query is required for search API - use a wildcard-like character for filter-only mode
     // The API accepts any string, so we use a common letter to get broad results
-    params.set("q", filters.query || " ");
+    params.set("keyword", filters.query || "a");
     
     if (filters.genres) params.set("genres", filters.genres);
     if (filters.type) params.set("type", filters.type);

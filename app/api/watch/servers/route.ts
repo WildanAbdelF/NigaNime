@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/servers?animeEpisodeId=${encodeURIComponent(episodeId)}`;
+    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/servers?id=${encodeURIComponent(episodeId)}`;
     console.log("Fetching servers from:", apiUrl);
 
     const response = await fetch(apiUrl, {

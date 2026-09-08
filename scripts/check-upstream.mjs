@@ -1,9 +1,9 @@
-const baseUrl = process.env.HIANIME_API_BASE_URL || process.env.NEXT_PUBLIC_HIANIME_API_BASE_URL || "https://niga-nime-api.vercel.app/api/v2/hianime";
+const baseUrl = process.env.HIANIME_API_BASE_URL || process.env.NEXT_PUBLIC_HIANIME_API_BASE_URL || "https://niganime-api-v2.vercel.app/api";
 
 const endpoints = [
   ["home", "/home"],
-  ["search", "/search?q=naruto"],
-  ["searchSuggestion", "/search/suggestion?q=naruto"],
+  ["search", "/search?keyword=naruto"],
+  ["searchSuggestion", "/search/suggestions?keyword=naruto"],
   ["schedule", "/schedule?date=2026-03-16"],
   ["categoryMostPopular", "/category/most-popular?page=1"],
   ["categoryTopAiring", "/category/top-airing?page=1"],

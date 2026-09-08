@@ -9,7 +9,7 @@ export const HIANIME_CONFIG = {
   BASE_URL:
     process.env.NEXT_PUBLIC_HIANIME_API_BASE_URL ||
     process.env.HIANIME_API_BASE_URL ||
-    "https://niga-nime-api.vercel.app/api/v2/hianime",
+    "https://niganime-api-v2.vercel.app/api",
 } as const;
 
 export const HIANIME_ENDPOINTS = {
@@ -18,7 +18,7 @@ export const HIANIME_ENDPOINTS = {
   
   // Search
   SEARCH: "/search",
-  SEARCH_SUGGESTION: "/search/suggestion",
+  SEARCH_SUGGESTION: "/search/suggestions",
   
   // Anime Info
   INFO: (id: string) => `/anime/${id}`,
@@ -27,28 +27,28 @@ export const HIANIME_ENDPOINTS = {
   EPISODES: (id: string) => `/anime/${id}/episodes`,
   
   // Episode Servers
-  SERVERS: (episodeId: string) => `/episode/servers?animeEpisodeId=${episodeId}`,
+  SERVERS: (episodeId: string) => `/episode/servers?id=${episodeId}`,
   
   // Streaming Sources
   SOURCES: (episodeId: string, server?: string, category?: string) => {
-    let url = `/episode/sources?animeEpisodeId=${episodeId}`;
-    if (server) url += `&server=${server}`;
-    if (category) url += `&category=${category}`;
+    let url = `/episode/sources?id=${episodeId}`;
+    if (server) url += `&server=${server.toLowerCase()}`;
+    if (category) url += `&category=${category.toLowerCase()}`;
     return url;
   },
   
   // A-Z List
-  AZ_LIST: (letter: string, page?: number) => `/azlist/${letter}${page ? `?page=${page}` : ""}`,
+  AZ_LIST: (letter: string, page?: number) => `/az-list?sort=${letter}${page ? `&page=${page}` : ""}`,
   
 
   // Categories
-  TOP_AIRING: "/top-airing",
-  MOST_POPULAR: "/most-popular",
-  MOST_FAVORITE: "/most-favorite",
-  LATEST_COMPLETED: "/latest-completed",
-  LATEST_EPISODES: "/latest-episodes",
-  NEW_ADDED: "/new-added",
-  TOP_UPCOMING: "/top-upcoming",
+  TOP_AIRING: "/category/top-airing",
+  MOST_POPULAR: "/category/most-popular",
+  MOST_FAVORITE: "/category/most-favorite",
+  LATEST_COMPLETED: "/category/latest-completed",
+  LATEST_EPISODES: "/category/recently-updated",
+  NEW_ADDED: "/category/new-added",
+  TOP_UPCOMING: "/category/top-upcoming",
   
   // Schedule
   SCHEDULE: (date: string) => `/schedule?date=${date}`,

@@ -103,7 +103,7 @@ export default function Footer() {
           <p>
             Powered by{" "}
             <Link
-              href="https://niga-nime-api.vercel.app/"
+              href="https://niganime-api-v2.vercel.app/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#f5c518] hover:underline"

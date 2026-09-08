@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `${HIANIME_CONFIG.BASE_URL}${HIANIME_ENDPOINTS.SEARCH_SUGGESTION}?q=${encodeURIComponent(query)}`,
+      `${HIANIME_CONFIG.BASE_URL}${HIANIME_ENDPOINTS.SEARCH_SUGGESTION}?keyword=${encodeURIComponent(query)}`,
       {
         headers: {
           "Content-Type": "application/json",

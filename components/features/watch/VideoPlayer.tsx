@@ -38,6 +38,7 @@ interface StreamingData {
   intro?: SegmentRange | null;
   outro?: SegmentRange | null;
   headers?: Record<string, string>;
+  embedUrl?: string;
 }
 
 interface VideoPlayerContextValue {
@@ -367,6 +368,9 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   }, [episodeId, episodeNumber, animeTitle, animePoster]);
 
   const getEmbedUrl = () => {
+    if (streamingData?.embedUrl) {
+      return streamingData.embedUrl;
+    }
     const animeId = episodeId.split("?")[0];
     const epMatch = episodeId.match(/ep=(\d+)/);
     const epNum = epMatch ? epMatch[1] : "1";
@@ -423,6 +427,10 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
         if (data?.sources && data.sources.length > 0) {
           setStreamingData(data);
           setCurrentQuality("auto");
+          const hasHls = data.sources.some((s: any) => s.isM3U8);
+          if (!hasHls && (data.embedUrl || data.sources[0]?.type === "iframe")) {
+            setUseEmbed(true);
+          }
         } else {
           console.error("No sources in response:", result);
           throw new Error("No streaming sources available. Try a different server.");

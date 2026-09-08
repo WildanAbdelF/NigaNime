@@ -12,8 +12,8 @@ type EndpointCheck = {
 
 const ENDPOINTS: Array<{ key: string; path: string }> = [
   { key: "home", path: "/home" },
-  { key: "search", path: "/search?q=naruto" },
-  { key: "searchSuggestion", path: "/search/suggestion?q=naruto" },
+  { key: "search", path: "/search?keyword=naruto" },
+  { key: "searchSuggestion", path: "/search/suggestions?keyword=naruto" },
   { key: "schedule", path: "/schedule?date=2026-03-16" },
   { key: "categoryMostPopular", path: "/category/most-popular?page=1" },
   { key: "categoryTopAiring", path: "/category/top-airing?page=1" },

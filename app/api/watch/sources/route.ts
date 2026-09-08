@@ -80,7 +80,7 @@ const normalizeCategory = (value: string | null): CategoryKey => {
 };
 
 async function fetchServerMatrix(episodeId: string): Promise<ServersPayload | null> {
-  const url = `${HIANIME_CONFIG.BASE_URL}/episode/servers?animeEpisodeId=${encodeURIComponent(episodeId)}`;
+  const url = `${HIANIME_CONFIG.BASE_URL}/episode/servers?id=${encodeURIComponent(episodeId)}`;
   try {
     const response = await fetchWithRetry(url, 2);
     const text = await response.text();
@@ -151,9 +151,9 @@ async function attemptAutoRecovery(
 
   for (const target of fallbackQueue) {
     attemptedTargets.push(target);
-    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/sources?animeEpisodeId=${encodeURIComponent(
+    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/sources?id=${encodeURIComponent(
       episodeId
-    )}&server=${encodeURIComponent(target.server)}&category=${encodeURIComponent(target.category)}`;
+    )}&server=${encodeURIComponent(target.server.toLowerCase())}&category=${encodeURIComponent(target.category.toLowerCase())}`;
 
     try {
       const fallbackResponse = await fetchWithRetry(apiUrl, 2);
@@ -219,7 +219,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Build the URL - episodeId may contain ? so we need to encode it properly
-    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/sources?animeEpisodeId=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`;
+    const apiUrl = `${HIANIME_CONFIG.BASE_URL}/episode/sources?id=${encodeURIComponent(episodeId)}&server=${encodeURIComponent(server.toLowerCase())}&category=${encodeURIComponent(category.toLowerCase())}`;
     
     console.log("Fetching sources from:", apiUrl);
 
