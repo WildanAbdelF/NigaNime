@@ -12,11 +12,13 @@ interface AnimeInfoProps {
       poster: string;
       description: string;
       stats: {
-        rating: string;
-        quality: string;
+        rating?: string;
+        quality?: string;
         episodes: { sub: number | null; dub: number | null };
-        type: string;
-        duration: string;
+        type?: string;
+        duration?: string;
+        score?: string;
+        malScore?: string;
       };
     };
     moreInfo?: {
@@ -25,12 +27,25 @@ interface AnimeInfoProps {
       studios?: string;
       status?: string;
       aired?: string;
+      score?: string;
+      malScore?: string;
+      malscore?: string;
+      rating?: string;
     };
   };
   currentEpisode: HiAnimeEpisode | null;
 }
 
 export default function AnimeInfo({ anime, currentEpisode }: AnimeInfoProps) {
+  const rawScore =
+    anime.moreInfo?.malScore ||
+    (anime.moreInfo as any)?.malscore ||
+    anime.moreInfo?.score ||
+    anime.info.stats?.score ||
+    anime.info.stats?.malScore;
+  const animeScore = rawScore && rawScore !== "?" ? rawScore : null;
+  const rating = anime.info.stats?.rating || anime.moreInfo?.rating;
+
   return (
     <div className="px-4 py-6 bg-[#0f1729]">
       <div className="flex gap-4 md:gap-6">
@@ -83,12 +98,17 @@ export default function AnimeInfo({ anime, currentEpisode }: AnimeInfoProps) {
                 {anime.info.stats.quality}
               </span>
             )}
-            {anime.info.stats.rating && (
-              <span className="flex items-center gap-1 px-2 py-1 bg-[#f5c518]/20 text-[#f5c518] rounded text-xs">
+            {animeScore && (
+              <span className="flex items-center gap-1 px-2 py-1 bg-[#f5c518]/20 text-[#f5c518] rounded text-xs font-semibold">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                 </svg>
-                {anime.info.stats.rating}
+                {animeScore}
+              </span>
+            )}
+            {rating && (
+              <span className="px-2 py-1 bg-[#1a2332] text-gray-300 rounded text-xs border border-gray-700">
+                {rating}
               </span>
             )}
             {anime.info.stats.episodes.sub && (

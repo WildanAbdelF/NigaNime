@@ -16,24 +16,29 @@ interface AnimeInfoData {
       poster: string;
       description: string;
       stats: {
-        rating: string;
-        quality: string;
+        rating?: string;
+        quality?: string;
         episodes: { sub: number | null; dub: number | null };
-        type: string;
-        duration: string;
+        type?: string;
+        duration?: string;
+        score?: string;
+        malScore?: string;
       };
     };
     moreInfo: {
-      japanese: string;
-      synonyms: string;
-      aired: string;
-      premiered: string;
-      duration: string;
-      status: string;
-      malscore: string;
-      genres: string[];
-      studios: string;
-      producers: string[];
+      japanese?: string;
+      synonyms?: string;
+      aired?: string;
+      premiered?: string;
+      duration?: string;
+      status?: string;
+      malscore?: string;
+      malScore?: string;
+      score?: string;
+      rating?: string;
+      genres?: string[];
+      studios?: string;
+      producers?: string[];
     };
   };
   promotionalVideos?: { title: string; source: string; thumbnail: string }[];
@@ -106,6 +111,16 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
 
   // Extract year from premiered or aired
   const year = moreInfo?.premiered?.match(/\d{4}/)?.[0] || moreInfo?.aired?.match(/\d{4}/)?.[0] || "";
+
+  // Extract score and rating
+  const rawScore =
+    moreInfo?.malScore ||
+    moreInfo?.malscore ||
+    moreInfo?.score ||
+    anime.info.stats?.score ||
+    anime.info.stats?.malScore;
+  const score = rawScore && rawScore !== "?" ? rawScore : "N/A";
+  const rating = anime.info.stats?.rating || moreInfo?.rating || "";
 
   return (
     <div className="min-h-screen bg-[#0f1729] overflow-x-hidden">
@@ -233,9 +248,15 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                     <span className="text-gray-400">Quality:</span>
                     <span className="text-white">{anime.info.stats?.quality || "N/A"}</span>
                   </div>
+                  {rating && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Rating:</span>
+                      <span className="text-white">{rating}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">MAL Score:</span>
-                    <span className="text-white">{moreInfo?.malscore || "N/A"}</span>
+                    <span className="text-white">{score !== "N/A" ? `${score} / 10` : "N/A"}</span>
                   </div>
                 </div>
               </div>
@@ -253,7 +274,12 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                 )}
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  {rating && (
+                    <span className="px-3 py-1 bg-[#1a2332] text-[#f5c518] text-sm font-semibold rounded border border-[#f5c518]/30">
+                      {rating}
+                    </span>
+                  )}
                   {anime.info.stats?.type && (
                     <span className="px-3 py-1 bg-[#1a2332] text-gray-300 text-sm rounded border border-gray-700">
                       {anime.info.stats.type}
@@ -262,6 +288,14 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                   {year && (
                     <span className="px-3 py-1 bg-[#f5c518] text-black text-sm font-semibold rounded">
                       {year}
+                    </span>
+                  )}
+                  {score !== "N/A" && (
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-[#f5c518]/15 text-[#f5c518] text-sm font-semibold rounded border border-[#f5c518]/30">
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                      {score}
                     </span>
                   )}
                 </div>
@@ -274,7 +308,7 @@ export default async function AnimeDetailPage({ params }: AnimeDetailPageProps) 
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
-                      <span className="text-xl font-bold">{moreInfo?.malscore || "N/A"}</span>
+                      <span className="text-xl font-bold">{score}</span>
                     </div>
                     <p className="text-gray-500 text-xs uppercase tracking-wider">Score</p>
                   </div>

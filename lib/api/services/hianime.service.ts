@@ -43,7 +43,28 @@ export const hianimeService = {
    * Get anime info by ID
    */
   async getInfo(id: string) {
-    return fetchHiAnime<HiAnimeInfoResponse>(HIANIME_ENDPOINTS.INFO(id));
+    const res = await fetchHiAnime<HiAnimeInfoResponse>(HIANIME_ENDPOINTS.INFO(id));
+    if (res?.data?.anime) {
+      const moreInfo = res.data.anime.moreInfo as any;
+      const stats = res.data.anime.info?.stats as any;
+      const score =
+        moreInfo?.malScore ||
+        moreInfo?.malscore ||
+        moreInfo?.score ||
+        stats?.score ||
+        stats?.malScore;
+
+      if (score && moreInfo) {
+        moreInfo.malscore = score;
+        moreInfo.malScore = score;
+        moreInfo.score = score;
+      }
+      if (score && stats) {
+        stats.score = score;
+        stats.malScore = score;
+      }
+    }
+    return res;
   },
 
   /**

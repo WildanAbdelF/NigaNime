@@ -142,6 +142,8 @@ export interface HiAnimeInfo {
         episodes: HiAnimeEpisodeCount;
         type: string;
         duration: string;
+        score?: string;
+        malScore?: string;
       };
     };
     moreInfo: {
@@ -151,7 +153,10 @@ export interface HiAnimeInfo {
       premiered: string;
       duration: string;
       status: string;
-      malscore: string;
+      malscore?: string;
+      malScore?: string;
+      score?: string;
+      rating?: string;
       genres: string[];
       studios: string;
       producers: string[];
