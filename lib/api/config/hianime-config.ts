@@ -5,11 +5,25 @@
  * Note: This is separate from Jikan API which provides MAL metadata
  */
 
-export const HIANIME_CONFIG = {
-  BASE_URL:
+function getBaseUrl(): string {
+  const envUrl =
     process.env.NEXT_PUBLIC_HIANIME_API_BASE_URL ||
-    process.env.HIANIME_API_BASE_URL ||
-    "https://niganime-api-v2.vercel.app/api",
+    process.env.HIANIME_API_BASE_URL;
+
+  // If envUrl is set and is NOT the decommissioned old API domain, use it
+  if (envUrl && !envUrl.includes("niga-nime-api.vercel.app")) {
+    let trimmed = envUrl.replace(/\/+$/, "");
+    if (trimmed.includes("niganime-api-v2.vercel.app") && !trimmed.endsWith("/api")) {
+      trimmed += "/api";
+    }
+    return trimmed;
+  }
+
+  return "https://niganime-api-v2.vercel.app/api";
+}
+
+export const HIANIME_CONFIG = {
+  BASE_URL: getBaseUrl(),
 } as const;
 
 export const HIANIME_ENDPOINTS = {
