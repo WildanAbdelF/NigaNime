@@ -94,7 +94,7 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">📅</span>
+            <div className="w-1 h-8 bg-[#f5c518] rounded-full" />
             <h2 className="font-heading text-2xl md:text-3xl font-bold text-white">
               Schedule
             </h2>
@@ -111,11 +111,10 @@ export default function ScheduleSection({ initialSchedule = [] }: ScheduleSectio
             <button
               key={day.date}
               onClick={() => setActiveDay(index)}
-              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                activeDay === index
-                  ? "bg-[#f5c518] text-black"
-                  : "bg-[#1a2332] text-gray-300 hover:bg-[#232d3f]"
-              }`}
+              className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeDay === index
+                ? "bg-[#f5c518] text-black"
+                : "bg-[#1a2332] text-gray-300 hover:bg-[#232d3f]"
+                }`}
             >
               {day.label}
             </button>
