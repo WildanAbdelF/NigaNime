@@ -12,6 +12,8 @@ interface Suggestion {
   poster: string;
   jname?: string;
   moreInfo?: string[];
+  type?: string;
+  duration?: string;
 }
 
 const navLinks = [
@@ -124,26 +126,20 @@ export default function Navbar() {
 
   // Handle click outside to close suggestions
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
       
-      // Desktop search
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(target) &&
-        inputRef.current &&
-        !inputRef.current.contains(target)
-      ) {
-        setShowSuggestions(false);
-      }
+      const isInsideDesktop = Boolean(
+        (suggestionsRef.current && suggestionsRef.current.contains(target)) ||
+        (inputRef.current && inputRef.current.contains(target))
+      );
       
-      // Mobile search
-      if (
-        mobileSuggestionsRef.current &&
-        !mobileSuggestionsRef.current.contains(target) &&
-        mobileInputRef.current &&
-        !mobileInputRef.current.contains(target)
-      ) {
+      const isInsideMobile = Boolean(
+        (mobileSuggestionsRef.current && mobileSuggestionsRef.current.contains(target)) ||
+        (mobileInputRef.current && mobileInputRef.current.contains(target))
+      );
+
+      if (!isInsideDesktop && !isInsideMobile) {
         setShowSuggestions(false);
       }
 
@@ -157,7 +153,11 @@ export default function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   // Cleanup debounce on unmount
@@ -169,51 +169,65 @@ export default function Navbar() {
     };
   }, []);
 
+  // Handle suggestion click with direct router navigation
+  const handleSuggestionClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+      return;
+    }
+    e.preventDefault();
+    setShowSuggestions(false);
+    setSearchQuery("");
+    setIsMobileMenuOpen(false);
+    router.push(`/anime/${id}`);
+  };
+
   // Suggestion item component
-  const SuggestionItem = ({ suggestion }: { suggestion: Suggestion }) => (
-    <Link
-      href={`/anime/${suggestion.id}`}
-      onClick={() => {
-        setShowSuggestions(false);
-        setSearchQuery("");
-        setIsMobileMenuOpen(false);
-      }}
-      className="flex items-center gap-3 px-4 py-2 hover:bg-[#232d3f] transition-colors"
-    >
-      <div className="relative w-10 h-14 rounded overflow-hidden flex-shrink-0">
-        {suggestion.poster ? (
-          <Image
-            src={suggestion.poster}
-            alt={suggestion.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
-        ) : (
-          <div className="w-full h-full bg-[#0f1729] flex items-center justify-center">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="text-white text-sm font-medium line-clamp-1">
-          {suggestion.name}
-        </h4>
-        {suggestion.jname && (
-          <p className="text-gray-500 text-xs line-clamp-1">
-            {suggestion.jname}
-          </p>
-        )}
-        {suggestion.moreInfo && suggestion.moreInfo.length > 0 && (
-          <p className="text-gray-400 text-xs mt-0.5">
-            {suggestion.moreInfo.join(" • ")}
-          </p>
-        )}
-      </div>
-    </Link>
-  );
+  const SuggestionItem = ({ suggestion }: { suggestion: Suggestion }) => {
+    const metaInfo = suggestion.moreInfo && suggestion.moreInfo.length > 0
+      ? suggestion.moreInfo.join(" • ")
+      : [suggestion.type, suggestion.duration].filter(Boolean).join(" • ");
+
+    return (
+      <Link
+        href={`/anime/${suggestion.id}`}
+        onClick={(e) => handleSuggestionClick(e, suggestion.id)}
+        className="flex items-center gap-3 px-4 py-2 hover:bg-[#232d3f] transition-colors"
+      >
+        <div className="relative w-10 h-14 rounded overflow-hidden flex-shrink-0">
+          {suggestion.poster ? (
+            <Image
+              src={suggestion.poster}
+              alt={suggestion.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="w-full h-full bg-[#0f1729] flex items-center justify-center">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white text-sm font-medium line-clamp-1">
+            {suggestion.name}
+          </h4>
+          {suggestion.jname && (
+            <p className="text-gray-500 text-xs line-clamp-1">
+              {suggestion.jname}
+            </p>
+          )}
+          {metaInfo ? (
+            <p className="text-gray-400 text-xs mt-0.5">
+              {metaInfo}
+            </p>
+          ) : null}
+        </div>
+      </Link>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-[#0f1729]/95 backdrop-blur-sm border-b border-[#2a3441]">

@@ -11,6 +11,8 @@ interface Suggestion {
   poster: string;
   jname?: string;
   moreInfo?: string[];
+  type?: string;
+  duration?: string;
 }
 
 interface SearchInputProps {
@@ -81,22 +83,35 @@ export default function SearchInput({ defaultValue = "", basePath = "/anime" }: 
 
   // Handle click outside to close suggestions
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
       if (
         suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node) &&
+        !suggestionsRef.current.contains(target) &&
         inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        !inputRef.current.contains(target)
       ) {
         setShowSuggestions(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, []);
+
+  // Handle suggestion click with direct router navigation
+  const handleSuggestionClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+      return;
+    }
+    e.preventDefault();
+    setShowSuggestions(false);
+    router.push(`/anime/${id}`);
+  };
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -153,47 +168,53 @@ export default function SearchInput({ defaultValue = "", basePath = "/anime" }: 
             </div>
           ) : (
             <div className="py-2">
-              {suggestions.map((suggestion) => (
-                <Link
-                  key={suggestion.id}
-                  href={`/anime/${suggestion.id}`}
-                  onClick={() => setShowSuggestions(false)}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-[#232d3f] transition-colors"
-                >
-                  <div className="relative w-10 h-14 rounded overflow-hidden flex-shrink-0">
-                    {suggestion.poster ? (
-                      <Image
-                        src={suggestion.poster}
-                        alt={suggestion.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#0f1729] flex items-center justify-center">
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-white text-sm font-medium line-clamp-1">
-                      {suggestion.name}
-                    </h4>
-                    {suggestion.jname && (
-                      <p className="text-gray-500 text-xs line-clamp-1">
-                        {suggestion.jname}
-                      </p>
-                    )}
-                    {suggestion.moreInfo && suggestion.moreInfo.length > 0 && (
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {suggestion.moreInfo.join(" • ")}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
+              {suggestions.map((suggestion) => {
+                const metaInfo = suggestion.moreInfo && suggestion.moreInfo.length > 0
+                  ? suggestion.moreInfo.join(" • ")
+                  : [suggestion.type, suggestion.duration].filter(Boolean).join(" • ");
+
+                return (
+                  <Link
+                    key={suggestion.id}
+                    href={`/anime/${suggestion.id}`}
+                    onClick={(e) => handleSuggestionClick(e, suggestion.id)}
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-[#232d3f] transition-colors"
+                  >
+                    <div className="relative w-10 h-14 rounded overflow-hidden flex-shrink-0">
+                      {suggestion.poster ? (
+                        <Image
+                          src={suggestion.poster}
+                          alt={suggestion.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#0f1729] flex items-center justify-center">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white text-sm font-medium line-clamp-1">
+                        {suggestion.name}
+                      </h4>
+                      {suggestion.jname && (
+                        <p className="text-gray-500 text-xs line-clamp-1">
+                          {suggestion.jname}
+                        </p>
+                      )}
+                      {metaInfo ? (
+                        <p className="text-gray-400 text-xs mt-0.5">
+                          {metaInfo}
+                        </p>
+                      ) : null}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
