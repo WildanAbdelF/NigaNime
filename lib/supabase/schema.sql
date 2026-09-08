@@ -17,19 +17,54 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Auto-create profile on user signup
+-- Auto-create profile on user signup (safe against duplicate usernames & trigger errors)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  base_username TEXT;
+  final_username TEXT;
+  counter INT := 0;
 BEGIN
+  -- Determine base username from metadata or email
+  base_username := COALESCE(
+    NULLIF(TRIM(NEW.raw_user_meta_data ->> 'name'), ''),
+    NULLIF(TRIM(NEW.raw_user_meta_data ->> 'full_name'), ''),
+    split_part(NEW.email, '@', 1),
+    'user'
+  );
+  final_username := base_username;
+
+  -- Ensure unique username if collision exists with another user
+  WHILE EXISTS (SELECT 1 FROM public.profiles WHERE username = final_username AND id != NEW.id) LOOP
+    counter := counter + 1;
+    final_username := base_username || '_' || counter;
+  END LOOP;
+
+  -- Upsert into public.profiles
   INSERT INTO public.profiles (id, username, avatar_url)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data ->> 'name', NEW.raw_user_meta_data ->> 'full_name', split_part(NEW.email, '@', 1)),
+    final_username,
     COALESCE(NEW.raw_user_meta_data ->> 'avatar_url', NULL)
-  );
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    username = EXCLUDED.username,
+    avatar_url = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url),
+    updated_at = now();
+
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Log warning to Supabase database logs but NEVER abort user signup in auth.users
+    RAISE WARNING 'handle_new_user failed for user id %: %', NEW.id, SQLERRM;
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Trigger: create profile after signup
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -96,14 +131,26 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.watch_history ENABLE ROW LEVEL SECURITY;
 
--- Profiles: users can read all profiles, edit only their own
+-- Profiles: users can read all profiles, insert and edit their own
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone"
   ON public.profiles FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
+
+-- Grant table permissions
+GRANT ALL ON TABLE public.profiles TO postgres, service_role;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.profiles TO authenticated;
+GRANT SELECT ON TABLE public.profiles TO anon;
 
 -- Favorites: users can CRUD only their own
 CREATE POLICY "Users can view own favorites"

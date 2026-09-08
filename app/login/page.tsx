@@ -25,7 +25,7 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -34,6 +34,9 @@ export default function LoginPage() {
       });
       if (error) {
         setError(error.message);
+      } else if (data?.session) {
+        router.push("/");
+        router.refresh();
       } else {
         setMessage("Check your email for a confirmation link!");
       }
