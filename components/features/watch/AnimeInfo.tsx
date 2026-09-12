@@ -88,12 +88,12 @@ export default function AnimeInfo({ anime, currentEpisode }: AnimeInfoProps) {
 
           {/* Meta Tags */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            {anime.info.stats.type && (
+            {anime.info.stats?.type && (
               <span className="px-2 py-1 bg-[#1a2332] text-gray-300 rounded text-xs">
                 {anime.info.stats.type}
               </span>
             )}
-            {anime.info.stats.quality && (
+            {anime.info.stats?.quality && (
               <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
                 {anime.info.stats.quality}
               </span>
@@ -111,12 +111,12 @@ export default function AnimeInfo({ anime, currentEpisode }: AnimeInfoProps) {
                 {rating}
               </span>
             )}
-            {anime.info.stats.episodes.sub && (
+            {anime.info.stats?.episodes?.sub && (
               <span className="px-2 py-1 bg-[#f5c518] text-black rounded text-xs font-bold">
                 SUB: {anime.info.stats.episodes.sub}
               </span>
             )}
-            {anime.info.stats.episodes.dub && (
+            {anime.info.stats?.episodes?.dub && (
               <span className="px-2 py-1 bg-blue-500 text-white rounded text-xs font-bold">
                 DUB: {anime.info.stats.episodes.dub}
               </span>

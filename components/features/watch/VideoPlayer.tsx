@@ -23,8 +23,12 @@ interface StreamingSource {
 }
 
 interface Track {
-  url: string;
-  lang: string;
+  url?: string;
+  file?: string;
+  lang?: string;
+  label?: string;
+  kind?: string;
+  default?: boolean;
 }
 
 interface SegmentRange {
@@ -169,10 +173,14 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   const [failoverCountdown, setFailoverCountdown] = useState(0);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
 
-  const subtitleTracks = useMemo(
-    () => streamingData?.tracks?.filter((track) => track.lang.toLowerCase() !== "thumbnails") || [],
-    [streamingData]
-  );
+  const subtitleTracks = useMemo(() => {
+    if (!streamingData?.tracks || !Array.isArray(streamingData.tracks)) return [];
+    return streamingData.tracks.filter((track) => {
+      const kind = (track.kind || "").toLowerCase();
+      const label = (track.label || track.lang || "").toLowerCase();
+      return kind !== "thumbnails" && label !== "thumbnails";
+    });
+  }, [streamingData]);
 
   const availableQualities = useMemo(() => {
     if (!streamingData?.sources || streamingData.sources.length === 0) return [];
@@ -213,8 +221,20 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     );
   }, [streamingData, currentQuality]);
 
-  const introRange = streamingData?.intro || null;
-  const outroRange = streamingData?.outro || null;
+  const introRange =
+    streamingData?.intro &&
+    typeof streamingData.intro.start === "number" &&
+    typeof streamingData.intro.end === "number" &&
+    streamingData.intro.end > streamingData.intro.start
+      ? streamingData.intro
+      : null;
+  const outroRange =
+    streamingData?.outro &&
+    typeof streamingData.outro.start === "number" &&
+    typeof streamingData.outro.end === "number" &&
+    streamingData.outro.end > streamingData.outro.start
+      ? streamingData.outro
+      : null;
   const captionFontScale = DEFAULT_CAPTION_SCALE;
   const captionBackground = hexToRgba(DEFAULT_CAPTION_COLOR, DEFAULT_CAPTION_OPACITY);
 
@@ -699,17 +719,25 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     }
 
     subtitleTracks.forEach((track) => {
+      const trackUrl = track.file || track.url;
+      if (!trackUrl) return;
+
+      const trackLabel = track.label || track.lang || "Subtitles";
+      const trackLang = (track.lang || track.label || "en").toLowerCase().slice(0, 2);
+
       const trackElement = document.createElement("track");
-      trackElement.kind = "subtitles";
-      // Use Vercel API proxy for subtitles to bypass CORS
-      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(track.url)}`;
-      trackElement.srclang = track.lang.toLowerCase().slice(0, 2);
-      trackElement.label = track.lang;
+      trackElement.kind = track.kind === "captions" ? "captions" : "subtitles";
+      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(trackUrl)}`;
+      trackElement.srclang = trackLang;
+      trackElement.label = trackLabel;
       video.appendChild(trackElement);
       subtitleTrackRefs.current.push(trackElement);
     });
 
-    const englishIndex = subtitleTracks.findIndex((track) => track.lang.toLowerCase().includes("english"));
+    const englishIndex = subtitleTracks.findIndex((track) => {
+      const label = (track.label || track.lang || "").toLowerCase();
+      return label.includes("english");
+    });
     const defaultIndex = englishIndex >= 0 ? englishIndex : 0;
     setSelectedSubtitle(defaultIndex);
 
@@ -1137,11 +1165,14 @@ export function PlayerControlRow({ className = "" }: { className?: string } = {}
             <option value="off" className="bg-[#0f1729] text-white">
               Off
             </option>
-            {subtitleTracks.map((track, index) => (
-              <option key={track.lang + index} value={index} className="bg-[#0f1729] text-white">
-                {track.lang}
-              </option>
-            ))}
+            {subtitleTracks.map((track, index) => {
+              const label = track.label || track.lang || `Track ${index + 1}`;
+              return (
+                <option key={`${label}-${index}`} value={index} className="bg-[#0f1729] text-white">
+                  {label}
+                </option>
+              );
+            })}
           </select>
         </label>
       </div>
