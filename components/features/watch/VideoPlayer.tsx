@@ -945,7 +945,6 @@ export function VideoSurface() {
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture"
           frameBorder="0"
-          sandbox="allow-scripts allow-same-origin allow-forms"
         />
         <button
           onClick={() => setUseEmbed(false)}
