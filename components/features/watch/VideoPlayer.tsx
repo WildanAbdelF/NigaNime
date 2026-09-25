@@ -73,6 +73,7 @@ interface VideoPlayerContextValue {
   handleSubtitleChange: (index: number | "off") => void;
   showFailoverPopup: boolean;
   failoverCountdown: number;
+  failoverTargetServer: string;
   showResumePrompt: boolean;
   savedPosition: number;
   handleResume: () => void;
@@ -171,6 +172,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   const [showOutroPrompt, setShowOutroPrompt] = useState(false);
   const [showFailoverPopup, setShowFailoverPopup] = useState(false);
   const [failoverCountdown, setFailoverCountdown] = useState(0);
+  const [failoverTargetServer, setFailoverTargetServer] = useState<string>("hd-1");
   const [showResumePrompt, setShowResumePrompt] = useState(false);
 
   const subtitleTracks = useMemo(() => {
@@ -250,8 +252,10 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     watchedMarkedRef.current = false;
     hasResumedRef.current = false;
     wantToResumeRef.current = false;
+    failoverAttemptedRef.current = false;
     savedPositionRef.current = 0;
     setShowResumePrompt(false);
+    setShowFailoverPopup(false);
   }, [episodeId]);
 
   // Fetch saved playback position on mount
@@ -398,23 +402,51 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
   };
 
   // Centralized failover function — instant redirect with brief toast
-  const triggerFailover = () => {
+  const triggerFailover = (targetServer?: string) => {
     if (failoverAttemptedRef.current) return;
     failoverAttemptedRef.current = true;
-    
-    console.log(`Server ${server} failed, instantly switching to HD-2...`);
+
+    const currentNorm = (server || "hd-1").toLowerCase();
+    // Default alternative: if on hd-2 -> switch to hd-1. If on hd-1 -> switch to hd-2.
+    const fallback = (targetServer || (currentNorm === "hd-2" ? "hd-1" : "hd-2")).toLowerCase();
+
+    // Check session storage to avoid infinite redirect loops
+    const sessionKey = `niganime_failover_${episodeId}`;
+    let attempted: string[] = [];
+    try {
+      const stored = sessionStorage.getItem(sessionKey);
+      if (stored) attempted = JSON.parse(stored);
+    } catch {}
+
+    if (!attempted.includes(currentNorm)) {
+      attempted.push(currentNorm);
+    }
+
+    if (attempted.includes(fallback)) {
+      console.warn(`All failover servers attempted for episode ${episodeId}:`, attempted);
+      setError(`Server ${currentNorm.toUpperCase()} dan ${fallback.toUpperCase()} sedang tidak dapat memutar video ini. Silakan coba External Player.`);
+      return;
+    }
+
+    attempted.push(fallback);
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify(attempted));
+    } catch {}
+
+    console.log(`Server ${server} failed, instantly switching to ${fallback.toUpperCase()}...`);
+    setFailoverTargetServer(fallback);
     setShowFailoverPopup(true);
     setFailoverCountdown(1);
-    
+
     if (failoverIntervalRef.current) {
       clearInterval(failoverIntervalRef.current);
     }
-    
+
     // Redirect after 1 second (just enough for user to see the toast)
     failoverIntervalRef.current = setTimeout(() => {
       failoverIntervalRef.current = null;
-      const hd2Url = buildWatchUrl(episodeId, { server: 'hd-2', category });
-      window.location.href = hd2Url;
+      const targetUrl = buildWatchUrl(episodeId, { server: fallback, category });
+      window.location.replace(targetUrl);
     }, 1000) as unknown as NodeJS.Timeout;
   };
 
@@ -444,6 +476,22 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
 
         const data = result.data || result;
 
+        // If the API auto-recovered to a different server, sync browser URL quietly
+        if (result.recovery?.applied?.server) {
+          const appliedServer = result.recovery.applied.server;
+          if (appliedServer.toLowerCase() !== server.toLowerCase()) {
+            console.log(`Auto-recovered to server ${appliedServer}`);
+            window.history.replaceState(
+              null,
+              "",
+              buildWatchUrl(episodeId, {
+                server: appliedServer,
+                category: result.recovery.applied.category || category,
+              })
+            );
+          }
+        }
+
         if (data?.sources && data.sources.length > 0) {
           setStreamingData(data);
           setCurrentQuality("auto");
@@ -459,10 +507,11 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
         console.error("Error fetching sources:", err);
         const errorMessage = err instanceof Error ? err.message : "Failed to load video";
         setError(errorMessage);
-        
-        // Auto-failover to HD-2 if not already on HD-2
-        if (!failoverAttemptedRef.current && server.toLowerCase() !== "hd-2") {
-          triggerFailover();
+
+        // Auto-failover if not already attempted
+        if (!failoverAttemptedRef.current) {
+          const nextServer = server.toLowerCase() === "hd-2" ? "hd-1" : "hd-2";
+          triggerFailover(nextServer);
         }
       } finally {
         setIsLoading(false);
@@ -573,6 +622,9 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
         video.play().catch(() => {});
         setIsSwitchingQuality(false);
         applyResumePosition();
+        try {
+          sessionStorage.removeItem(`niganime_failover_${episodeId}`);
+        } catch {}
       };
 
       const handleLevelSwitched = () => setIsSwitchingQuality(false);
@@ -580,17 +632,13 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
           console.error('HLS Fatal Error:', data.type, data.details);
-          
+
           // Immediately trigger failover on any fatal error
-          if (!failoverAttemptedRef.current && server.toLowerCase() !== 'hd-2') {
-            // Not on HD-2 yet, failover to HD-2
-            triggerFailover();
-          } else if (server.toLowerCase() === 'hd-2') {
-            // Already on HD-2 and still failing
-            setError('Server tidak tersedia. Coba lagi nanti atau gunakan server lain.');
+          if (!failoverAttemptedRef.current) {
+            const nextServer = server.toLowerCase() === 'hd-2' ? 'hd-1' : 'hd-2';
+            triggerFailover(nextServer);
           } else {
-            // Failover already attempted
-            setError('Video playback error');
+            setError('Video playback error. Coba server lain atau gunakan External Player.');
           }
         }
       });
@@ -901,6 +949,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     handleSubtitleChange,
     showFailoverPopup,
     failoverCountdown,
+    failoverTargetServer,
     showResumePrompt,
     savedPosition: savedPositionRef.current,
     handleResume,
@@ -944,6 +993,7 @@ export function VideoSurface() {
     handleSkip,
     showFailoverPopup,
     failoverCountdown,
+    failoverTargetServer,
     showResumePrompt,
     savedPosition,
     handleResume,
@@ -979,7 +1029,7 @@ export function VideoSurface() {
           <div className="bg-[#1a2332] border border-[#f5c518] rounded-xl px-5 py-3 shadow-2xl flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-[#f5c518] border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <span className="text-white text-sm font-medium">
-              Server error — switching to HD-2...
+              Server error — switching to {failoverTargetServer.toUpperCase()}...
             </span>
           </div>
         </div>

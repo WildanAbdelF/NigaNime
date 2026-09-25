@@ -98,34 +98,59 @@ async function fetchServerMatrix(episodeId: string): Promise<ServersPayload | nu
   }
 }
 
+const VALID_SOURCES_SERVERS = new Set(["hd-1", "hd-2", "megacloud", "vidstreaming", "streamtape", "streamsb"]);
+
+function normalizeServerTarget(serverName: string): string | null {
+  const lower = serverName.toLowerCase().trim();
+  if (lower === "hd-1" || lower === "megacloud") return "hd-1";
+  if (lower === "hd-2" || lower === "vidstreaming" || lower === "vidstream-2") return "hd-2";
+  if (VALID_SOURCES_SERVERS.has(lower)) return lower;
+  return null;
+}
+
 const buildFallbackQueue = (
-  serversPayload: ServersPayload,
+  serversPayload: ServersPayload | null,
   failedServer: string,
   failedCategory: CategoryKey
 ): FallbackTarget[] => {
   const seen = new Set<string>();
   const queue: FallbackTarget[] = [];
-  const orderedCategories: CategoryKey[] = [failedCategory, ...CATEGORY_PRIORITY.filter(cat => cat !== failedCategory)];
+  const normFailedServer = failedServer.toLowerCase().trim();
 
-  for (const category of orderedCategories) {
-    const serverList = serversPayload[category] || [];
+  // Primary alternate server is always preferred first (hd-1 <-> hd-2)
+  const primaryAlternate = normFailedServer === "hd-2" ? "hd-1" : "hd-2";
+  const primaryKey = `${failedCategory}:${primaryAlternate}`;
+  seen.add(primaryKey);
+  seen.add(`${failedCategory}:${normFailedServer}`);
+  queue.push({
+    category: failedCategory,
+    server: primaryAlternate,
+    origin: "same-category",
+  });
 
-    for (const option of serverList) {
-      if (category === failedCategory && option.serverName === failedServer) {
-        continue;
+  if (serversPayload) {
+    const orderedCategories: CategoryKey[] = [
+      failedCategory,
+      ...CATEGORY_PRIORITY.filter((cat) => cat !== failedCategory),
+    ];
+
+    for (const category of orderedCategories) {
+      const serverList = serversPayload[category] || [];
+
+      for (const option of serverList) {
+        const normalized = normalizeServerTarget(option.serverName);
+        if (!normalized) continue;
+
+        const key = `${category}:${normalized}`;
+        if (seen.has(key)) continue;
+
+        seen.add(key);
+        queue.push({
+          category,
+          server: normalized,
+          origin: category === failedCategory ? "same-category" : "cross-category",
+        });
       }
-
-      const key = `${category}:${option.serverName}`;
-      if (seen.has(key)) {
-        continue;
-      }
-
-      seen.add(key);
-      queue.push({
-        category,
-        server: option.serverName,
-        origin: category === failedCategory ? "same-category" : "cross-category",
-      });
     }
   }
 
@@ -138,11 +163,8 @@ async function attemptAutoRecovery(
   failedCategory: CategoryKey
 ): Promise<RecoveryResult> {
   const serversPayload = await fetchServerMatrix(episodeId);
-  if (!serversPayload) {
-    return { success: false, attemptedTargets: [] };
-  }
-
   const fallbackQueue = buildFallbackQueue(serversPayload, failedServer, failedCategory);
+
   if (fallbackQueue.length === 0) {
     return { success: false, attemptedTargets: [] };
   }
@@ -171,6 +193,17 @@ async function attemptAutoRecovery(
         payload = JSON.parse(fallbackText);
       } catch (error) {
         console.error("Fallback JSON parse error:", error);
+        continue;
+      }
+
+      // Check that payload actually has sources
+      const payloadData = payload?.data as any;
+      const sourcesList = payloadData?.sources || (payload as any)?.sources;
+      const hasSources = Array.isArray(sourcesList) && sourcesList.length > 0;
+      const hasEmbed = Boolean(payloadData?.embedUrl || (payload as any)?.embedUrl);
+
+      if (!hasSources && !hasEmbed) {
+        console.warn(`Fallback ${target.server} (${target.category}) returned no sources, trying next candidate...`);
         continue;
       }
 
@@ -233,51 +266,45 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       console.error("API error response:", responseText);
 
-      if (RECOVERABLE_STATUS.has(response.status)) {
-        const recoveryResult = await attemptAutoRecovery(episodeId, server, category);
+      // Attempt auto-recovery on any non-OK upstream status
+      const recoveryResult = await attemptAutoRecovery(episodeId, server, category);
 
-        if (recoveryResult.success && recoveryResult.payload) {
-          const payloadWithRecovery = {
-            ...recoveryResult.payload,
-            recovery: {
-              autoSwitch: true,
-              triggeredBy: response.status,
-              attempted: recoveryResult.attemptedTargets,
-              applied: recoveryResult.appliedTarget,
-            },
-          };
-
-          return NextResponse.json(payloadWithRecovery, {
-            status: recoveryResult.status ?? 200,
-          });
-        }
-
-        return NextResponse.json(
-          {
-            error: "Streaming source temporarily unavailable after automatic recovery attempts.",
-            details: truncatedResponse,
-            recovery: {
-              triggeredBy: response.status,
-              autoRetryAfterMs: 5000,
-              attempted: recoveryResult.attemptedTargets,
-              suggestions: FALLBACK_SUGGESTIONS,
-            },
+      if (recoveryResult.success && recoveryResult.payload) {
+        const payloadWithRecovery = {
+          ...recoveryResult.payload,
+          recovery: {
+            autoSwitch: true,
+            triggeredBy: response.status,
+            attempted: recoveryResult.attemptedTargets,
+            applied: recoveryResult.appliedTarget,
           },
-          {
-            status: response.status,
-            headers: { "Retry-After": "5" },
-          }
-        );
+        };
+
+        return NextResponse.json(payloadWithRecovery, {
+          status: recoveryResult.status ?? 200,
+        });
       }
-      
+
       return NextResponse.json(
-        { error: `API error: ${response.status}`, details: truncatedResponse },
-        { status: response.status }
+        {
+          error: "Streaming source temporarily unavailable after automatic recovery attempts.",
+          details: truncatedResponse,
+          recovery: {
+            triggeredBy: response.status,
+            autoRetryAfterMs: 5000,
+            attempted: recoveryResult.attemptedTargets,
+            suggestions: FALLBACK_SUGGESTIONS,
+          },
+        },
+        {
+          status: response.status,
+          headers: { "Retry-After": "5" },
+        }
       );
     }
 
     // Parse the response
-    let data;
+    let data: any;
     try {
       data = JSON.parse(responseText);
     } catch {
@@ -286,6 +313,27 @@ export async function GET(request: NextRequest) {
         { error: "Invalid JSON response from API" },
         { status: 500 }
       );
+    }
+
+    // Also check if 200 OK returned empty sources, and recover if so!
+    const dataSources = data?.data?.sources || data?.sources;
+    const hasValidSources = (Array.isArray(dataSources) && dataSources.length > 0) || Boolean(data?.data?.embedUrl || data?.embedUrl);
+    if (!hasValidSources) {
+      console.warn("Primary server returned no sources, attempting auto-recovery...");
+      const recoveryResult = await attemptAutoRecovery(episodeId, server, category);
+      if (recoveryResult.success && recoveryResult.payload) {
+        return NextResponse.json({
+          ...recoveryResult.payload,
+          recovery: {
+            autoSwitch: true,
+            triggeredBy: "empty_sources",
+            attempted: recoveryResult.attemptedTargets,
+            applied: recoveryResult.appliedTarget,
+          },
+        }, {
+          status: recoveryResult.status ?? 200,
+        });
+      }
     }
 
     return NextResponse.json(data);
