@@ -649,15 +649,26 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
       if (!videoRef.current) return;
       const video = videoRef.current;
 
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        video.currentTime = Math.min(video.currentTime + 10, video.duration);
+        video.currentTime = Math.min(video.currentTime + 5, video.duration);
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        video.currentTime = Math.max(video.currentTime - 10, 0);
+        video.currentTime = Math.max(video.currentTime - 5, 0);
       }
     };
 
