@@ -727,7 +727,11 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
 
       const trackElement = document.createElement("track");
       trackElement.kind = track.kind === "captions" ? "captions" : "subtitles";
-      trackElement.src = `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(trackUrl)}`;
+      // Use trackUrl directly if already proxied by backend API, otherwise route through local proxy
+      const srcUrl = trackUrl.includes("/api/proxy/subtitle")
+        ? trackUrl
+        : `${STREAM_PROXY_BASE}/subtitle?url=${encodeURIComponent(trackUrl)}`;
+      trackElement.src = srcUrl;
       trackElement.srclang = trackLang;
       trackElement.label = trackLabel;
       video.appendChild(trackElement);

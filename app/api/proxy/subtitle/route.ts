@@ -31,6 +31,19 @@ function getHeadersForUrl(targetUrl: string): { referer: string; origin: string 
       };
     }
     
+    // Megaplay / Hiddenvertex / Akirax CDN
+    if (
+      hostname.includes('hiddenvertex') ||
+      hostname.includes('megaplay') ||
+      hostname.includes('akirax') ||
+      hostname.includes('shiora')
+    ) {
+      return {
+        referer: 'https://megaplay.buzz/',
+        origin: 'https://megaplay.buzz',
+      };
+    }
+
     // Rabbitstream/Vidcloud
     if (hostname.includes('rabbitstream') || hostname.includes('vidcloud')) {
       return {
