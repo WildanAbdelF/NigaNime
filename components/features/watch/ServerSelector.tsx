@@ -96,14 +96,17 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
         <div className="flex flex-wrap gap-2">
           {[...(servers[currentCategory as keyof ServersData] || [])]
             .sort((a, b) => {
-              // Put HD-2 first since HD-1 (Megacloud) is often blocked
-              if ((a.serverName || "").toLowerCase() === "hd-2") return -1;
-              if ((b.serverName || "").toLowerCase() === "hd-2") return 1;
+              const aName = (a.serverName || "").toLowerCase();
+              const bName = (b.serverName || "").toLowerCase();
+              // Prioritaskan server HD-1 sebagai server utama, kemudian HD-2
+              if (aName === "hd-1") return -1;
+              if (bName === "hd-1") return 1;
+              if (aName === "hd-2") return -1;
+              if (bName === "hd-2") return 1;
               return 0;
             })
             .map((server) => {
               const serverName = server.serverName || `Server ${server.serverId}`;
-              const isUnstable = serverName.toLowerCase() === "hd-1";
               return (
                 <a
                   key={`${currentCategory}-${server.serverId}-${serverName}`}
@@ -111,17 +114,11 @@ export default function ServerSelector({ episodeId, currentServer, currentCatego
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-center relative ${
                     currentServer.toLowerCase() === serverName.toLowerCase()
                       ? "bg-[#f5c518] text-black"
-                      : isUnstable
-                        ? "bg-[#0f1729] text-gray-500 hover:bg-[#232d3f] hover:text-gray-300"
-                        : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
+                      : "bg-[#0f1729] text-gray-300 hover:bg-[#232d3f] hover:text-white"
                   }`}
                   style={{ minWidth: "96px" }}
-                  title={isUnstable ? "This server may be unstable" : undefined}
                 >
                   {serverName.toUpperCase()}
-                  {isUnstable && (
-                    <span className="ml-1 text-[10px] text-yellow-500">⚠</span>
-                  )}
                 </a>
               );
             })}

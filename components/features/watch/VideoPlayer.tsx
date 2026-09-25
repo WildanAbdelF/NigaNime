@@ -496,7 +496,7 @@ export default function VideoPlayer({ episodeId, server, category, episodeNumber
     }
 
     // Use Vercel API proxy to bypass CORS restrictions
-    const proxyUrl = `${STREAM_PROXY_BASE}/stream?url=${encodeURIComponent(selectedSource.url)}`;
+    const proxyUrl = selectedSource.url.includes("/api/proxy") ? selectedSource.url : `${STREAM_PROXY_BASE}/stream?url=${encodeURIComponent(selectedSource.url)}`;
 
     if (selectedSource.isM3U8 && Hls.isSupported()) {
       resetHlsQualities();
